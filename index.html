@@ -132,7 +132,16 @@
   }
   .header-totals .ht-col { display: flex; flex-direction: column; line-height: 1.1; }
   .header-totals .ht-label { font-family: 'Poppins', Arial, sans-serif; font-size: 9px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); font-weight: 700; margin-bottom: 3px; }
-  .header-totals .ht-eur { font-family: 'Poppins', Arial, sans-serif; font-size: 22px; font-weight: 700; color: var(--accent); letter-spacing: -0.5px; }
+  .header-totals .ht-eur { font-family: 'Poppins', Arial, sans-serif; font-size: 22px; font-weight: 700; color: var(--ink); letter-spacing: -0.5px; transition: color .15s ease; }
+  .header-totals .ht-eur.under { color: var(--green); }
+  .header-totals .ht-eur.over { color: var(--accent); }
+  .header-totals .ht-delta {
+    font-family: 'Poppins', Arial, sans-serif;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.1px;
+    color: var(--muted); margin-top: 3px; min-height: 14px;
+  }
+  .header-totals .ht-delta.under { color: var(--green); }
+  .header-totals .ht-delta.over { color: var(--accent); }
   .header-totals .ht-usd { font-family: 'Poppins', Arial, sans-serif; font-size: 14px; color: var(--ink-soft); font-weight: 600; }
   .header-totals .ht-divider { width: 1px; height: 32px; background: var(--line); }
   .header-totals .ht-rate { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--muted); }
@@ -140,6 +149,22 @@
     width: 56px; padding: 3px 6px; border: 1px solid var(--line); border-radius: 6px;
     font: inherit; font-size: 12px; text-align: right; background: var(--panel); color: var(--ink);
   }
+  .header-totals .ht-budget-input {
+    display: flex; align-items: center; gap: 2px;
+    border: 1px solid var(--line); border-radius: 8px; padding: 2px 6px 2px 8px;
+    background: var(--panel); transition: border-color .12s, box-shadow .12s;
+  }
+  .header-totals .ht-budget-input:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .header-totals .ht-budget-input .prefix {
+    font-family: 'Poppins', Arial, sans-serif; font-size: 18px; color: var(--muted); font-weight: 600;
+  }
+  .header-totals .ht-budget-input input {
+    width: 90px; padding: 2px 0; border: 0; outline: 0; background: transparent; color: var(--ink);
+    font-family: 'Poppins', Arial, sans-serif; font-size: 20px; font-weight: 700;
+    text-align: right; letter-spacing: -0.3px;
+  }
+  .header-totals .ht-budget-input input::-webkit-outer-spin-button,
+  .header-totals .ht-budget-input input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
   /* Buttons */
   .btn {
@@ -291,7 +316,9 @@
   .shop-head { display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
   .shop-head h2 { font-family: 'Poppins', Arial, sans-serif; font-weight: 600; font-size: 22px; margin: 0; color: var(--ink); letter-spacing: -0.3px; }
   .shop-head .sub { color: var(--muted); font-size: 12px; margin-top: 4px; }
-  .shop-total { font-family: 'Poppins', Arial, sans-serif; font-size: 28px; color: var(--accent); font-weight: 700; letter-spacing: -0.5px; }
+  .shop-total { font-family: 'Poppins', Arial, sans-serif; font-size: 28px; color: var(--ink); font-weight: 700; letter-spacing: -0.5px; transition: color .15s ease; }
+  .shop-total.under { color: var(--green); }
+  .shop-total.over { color: var(--accent); }
   .shop-total .lbl { font-family: 'Poppins', Arial, sans-serif; font-size: 10px; color: var(--muted); display: block; text-transform: uppercase; letter-spacing: 0.6px; font-weight: 600; margin-bottom: 2px; }
 
   .cat-group { margin-bottom: 24px; }
@@ -337,6 +364,11 @@
 
   .hint { font-size: 12px; color: var(--muted); margin-top: 6px; font-style: italic; }
   .pill { display: inline-block; background: var(--panel-2); border: 1px solid var(--line); padding: 2px 10px; border-radius: 999px; font-size: 11px; color: var(--muted); margin-left: 8px; }
+  .pill.cost-pill {
+    background: var(--accent-soft); border-color: var(--accent);
+    color: var(--accent-deep); font-weight: 700; font-family: 'Poppins', Arial, sans-serif;
+  }
+  :root[data-theme="dark"] .pill.cost-pill { color: var(--accent); }
 
   /* Auth screen */
   .auth-screen {
@@ -412,10 +444,19 @@
     <h1>Loire Valley Wedding Week</h1>
     <div class="sub">Tue 9 — Mon 15 June 2026  ·  Wedding day: Saturday 13 June</div>
   </div>
-  <div class="header-totals" title="Live shopping list total across all events. Edit the rate to change the USD conversion.">
+  <div class="header-totals" title="Set a budget on the left. The shopping total turns green when under budget, orange when over.">
+    <div class="ht-col">
+      <div class="ht-label">Budget</div>
+      <div class="ht-budget-input">
+        <span class="prefix">€</span>
+        <input type="number" step="100" min="0" id="header-budget" placeholder="0" />
+      </div>
+    </div>
+    <div class="ht-divider"></div>
     <div class="ht-col">
       <div class="ht-label">Shopping total</div>
       <div class="ht-eur" id="header-eur">€0.00</div>
+      <div class="ht-delta" id="header-delta"></div>
     </div>
     <div class="ht-divider"></div>
     <div class="ht-col">
@@ -574,7 +615,10 @@
       </div>
 
       <div class="food-section" id="food-section">
-        <h3>Food & supplies for this event <span class="pill" id="food-pill">applies to shopping list</span></h3>
+        <h3>Food & supplies for this event
+          <span class="pill" id="food-pill">applies to shopping list</span>
+          <span class="pill cost-pill" id="event-cost-pill">Event cost: €0.00</span>
+        </h3>
         <div class="food-presets" id="food-presets"></div>
         <table class="food-table">
           <thead>
@@ -905,6 +949,7 @@ function hideAuthScreen() {
 function renderAll() {
   document.getElementById('default-people').value = state.defaultPeople;
   document.getElementById('usd-rate').value = (state.usdRate || 1.10).toFixed(2);
+  document.getElementById('header-budget').value = (state.budget != null && state.budget !== '') ? state.budget : '';
   renderCalendar();
   renderShopping();
   renderHeaderTotal();
@@ -995,6 +1040,7 @@ function seedState() {
   return {
     defaultPeople: 25,
     usdRate: 1.10,
+    budget: null,
     events: [
       mkEvent('Arrival & settle in',        '2026-06-09', 16, 0, 18, 0, 'travel',   25, 'Check into château, distribute keys'),
       mkEvent('Welcome aperitif',           '2026-06-09', 18, 30, 20, 0, 'other',  25, 'Champagne on the terrace'),
@@ -1098,10 +1144,12 @@ function renderEvent(ev) {
   el.style.top = top + 'px';
   el.style.height = height + 'px';
   el.style.background = TYPE_COLOR[ev.type] || TYPE_COLOR.other;
+  const cost = computeEventTotal(ev);
+  const costStr = cost > 0 ? ` · €${cost < 10 ? cost.toFixed(2) : Math.round(cost)}` : '';
   el.innerHTML = `
     <div class="title">${escapeHTML(ev.title)}</div>
     <div class="time">${formatTime(ev.startHour, ev.startMin)} – ${formatTime(ev.endHour, ev.endMin)}</div>
-    <div class="ppl">👤 ${ev.people}</div>
+    <div class="ppl">👤 ${ev.people}${costStr}</div>
   `;
   el.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -1278,10 +1326,18 @@ function renderPresetButtons(data) {
   wrap.appendChild(clear);
 }
 
+function updateEventCostPill(data) {
+  const people = parseInt(document.getElementById('evt-people').value, 10) || 0;
+  const cost = computeEventTotal({ food: data.food, people });
+  const pill = document.getElementById('event-cost-pill');
+  if (pill) pill.textContent = 'Event cost: €' + cost.toFixed(2);
+}
+
 function renderFoodRows(data) {
   const tbody = document.getElementById('food-rows');
   const people = parseInt(document.getElementById('evt-people').value, 10) || 0;
   document.getElementById('hdr-people').textContent = people;
+  updateEventCostPill(data);
 
   if (data.food.length === 0) {
     tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:18px;">No food items yet. Use a preset above or add custom items below.</td></tr>';
@@ -1308,6 +1364,7 @@ function renderFoodRows(data) {
         data.food[idx].perPerson = parseFloat(e.target.value) || 0;
         const total = (data.food[idx].perPerson * (parseInt(document.getElementById('evt-people').value, 10) || 0)).toFixed(2).replace(/\.?0+$/, '');
         tr.querySelector('.qty-calc').textContent = total + ' ' + (FOOD_LIBRARY.find(L => L.name === data.food[idx].name)?.unit || '');
+        updateEventCostPill(data);
       });
       tr.querySelector('.del').addEventListener('click', () => {
         data.food.splice(idx, 1);
@@ -1431,11 +1488,58 @@ function computeShoppingTotal() {
   return total;
 }
 
+/* Per-event cost — pro-rated (no per-event pack rounding) so per-event totals
+   reflect this event's share of consumption rather than how it would be bought
+   in isolation. Returns EUR. */
+function computeEventTotal(ev) {
+  let total = 0;
+  (ev.food || []).forEach(f => {
+    const lib = FOOD_LIBRARY.find(L => L.name === f.name);
+    if (!lib) return;
+    const qty = (f.perPerson || 0) * (ev.people || 0);
+    if (!qty) return;
+    const price = state.priceOverrides[f.name] !== undefined ? state.priceOverrides[f.name] : lib.packagePrice;
+    total += (qty / lib.packageSize) * price;
+  });
+  return total;
+}
+
+function applyBudgetClass(el, eur) {
+  if (!el) return;
+  el.classList.remove('under', 'over');
+  const budget = parseFloat(state.budget);
+  if (!isFinite(budget) || budget <= 0) return;
+  if (eur > budget) el.classList.add('over');
+  else el.classList.add('under');
+}
+
 function renderHeaderTotal() {
   const eur = computeShoppingTotal();
   const rate = state.usdRate || 1.10;
-  document.getElementById('header-eur').textContent = '€' + eur.toFixed(2);
-  document.getElementById('header-usd').textContent = '$' + (eur * rate).toFixed(2);
+  const eurEl = document.getElementById('header-eur');
+  const usdEl = document.getElementById('header-usd');
+  const deltaEl = document.getElementById('header-delta');
+
+  eurEl.textContent = '€' + eur.toFixed(2);
+  usdEl.textContent = '$' + (eur * rate).toFixed(2);
+
+  applyBudgetClass(eurEl, eur);
+
+  // Delta line ("Under by …" / "Over by …")
+  const budget = parseFloat(state.budget);
+  deltaEl.classList.remove('under', 'over');
+  if (isFinite(budget) && budget > 0) {
+    const delta = budget - eur;
+    if (delta >= 0) {
+      deltaEl.classList.add('under');
+      deltaEl.textContent = 'Under by €' + delta.toFixed(2);
+    } else {
+      deltaEl.classList.add('over');
+      deltaEl.textContent = 'Over by €' + Math.abs(delta).toFixed(2);
+    }
+  } else {
+    deltaEl.textContent = 'Set a budget to track over / under';
+  }
 }
 
 function renderShopping() {
@@ -1505,7 +1609,9 @@ function renderShopping() {
   });
 
   out.innerHTML = html;
-  document.getElementById('shop-grand-total').textContent = '€' + grandTotal.toFixed(2);
+  const grandEl = document.getElementById('shop-grand-total');
+  grandEl.textContent = '€' + grandTotal.toFixed(2);
+  applyBudgetClass(grandEl, grandTotal);
   renderHeaderTotal();
 
   // Wire up checkboxes & price overrides
@@ -1521,7 +1627,8 @@ function renderShopping() {
       if (!isNaN(v)) {
         state.priceOverrides[name] = v;
         saveState();
-        renderShopping(); // re-aggregate for new total
+        renderShopping();   // re-aggregate for new total
+        renderCalendar();   // keep per-event cost chips in sync
       }
     });
   });
@@ -1643,6 +1750,20 @@ document.getElementById('usd-rate').addEventListener('input', e => {
     saveState();
     renderHeaderTotal();
   }
+});
+
+document.getElementById('header-budget').addEventListener('input', e => {
+  const raw = e.target.value.trim();
+  if (raw === '') {
+    state.budget = null;
+  } else {
+    const v = parseFloat(raw);
+    state.budget = (isFinite(v) && v >= 0) ? v : null;
+  }
+  saveState();
+  renderHeaderTotal();
+  // Also re-render shopping page so its grand total picks up the new color
+  if (currentView() === 'shopping') renderShopping();
 });
 
 document.getElementById('theme-toggle').addEventListener('click', () => {
