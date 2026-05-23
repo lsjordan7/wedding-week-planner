@@ -11,7 +11,8 @@ A self-contained, single-file web app for planning a week-long wedding event. Bu
 - **Aggregated shopping list** that sums every item across every event, rounds up to package counts, and shows a running total
 - **Inline price overrides** and checkboxes for shopping in person
 - **PNG and PDF export** for printing the calendar or shopping list
-- **localStorage persistence** — your data stays in your browser
+- **Works offline by default** — all data lives in your browser's localStorage; no sign-in required to use the app.
+- **Optional cloud sync via Supabase** — sign in with email + password to share a single live planner across devices and authorized users. Cloud syncing only kicks in while signed in. Requires one-time setup ([see SUPABASE_SETUP.md](SUPABASE_SETUP.md)).
 
 ## Usage
 

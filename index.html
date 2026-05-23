@@ -22,6 +22,7 @@
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
     /* Anthropic light theme */
@@ -336,6 +337,72 @@
 
   .hint { font-size: 12px; color: var(--muted); margin-top: 6px; font-style: italic; }
   .pill { display: inline-block; background: var(--panel-2); border: 1px solid var(--line); padding: 2px 10px; border-radius: 999px; font-size: 11px; color: var(--muted); margin-left: 8px; }
+
+  /* Auth screen */
+  .auth-screen {
+    position: fixed; inset: 0; z-index: 200;
+    background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .auth-screen.hidden { display: none; }
+  .auth-card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 36px 32px;
+    width: 100%; max-width: 380px;
+    box-shadow: var(--shadow-lg);
+    position: relative;
+  }
+  .auth-close {
+    position: absolute; top: 10px; right: 12px;
+    background: none; border: 0; font-size: 22px; line-height: 1;
+    color: var(--muted); cursor: pointer; padding: 4px 8px; border-radius: 6px;
+  }
+  .auth-close:hover { color: var(--ink); background: var(--panel-2); }
+  .auth-brand { text-align: center; margin-bottom: 26px; }
+  .auth-brand h1 {
+    font-family: 'Poppins', Arial, sans-serif;
+    font-size: 22px; margin: 0 0 6px; color: var(--ink); font-weight: 600; letter-spacing: -0.3px;
+  }
+  .auth-brand p { margin: 0; color: var(--muted); font-size: 13px; }
+  .auth-card .field { margin-bottom: 14px; }
+  .auth-submit { width: 100%; padding: 10px; margin-top: 10px; justify-content: center; }
+  .auth-link {
+    background: none; border: 0; color: var(--accent); cursor: pointer;
+    font-size: 12px; padding: 12px 0 0; width: 100%; text-align: center;
+    font-family: 'Poppins', Arial, sans-serif;
+  }
+  .auth-link:hover { text-decoration: underline; color: var(--accent-deep); }
+  .auth-error {
+    color: #c45a4f; font-size: 12px; min-height: 16px; margin: 4px 0;
+    font-family: 'Poppins', Arial, sans-serif;
+  }
+  .auth-error.success { color: var(--green); }
+
+  /* Sync status badge */
+  .sync-status {
+    display: none; align-items: center; gap: 6px;
+    font-family: 'Poppins', Arial, sans-serif;
+    font-size: 11px; color: var(--muted); font-weight: 500;
+    padding: 5px 10px 5px 9px; border: 1px solid var(--line); border-radius: 999px;
+    background: var(--panel);
+  }
+  .sync-status .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--green); flex-shrink: 0;
+  }
+  .sync-status.saving .dot { background: var(--accent); animation: sync-pulse 1s ease-in-out infinite; }
+  .sync-status.error .dot { background: #c45a4f; }
+  @keyframes sync-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+  .user-chip {
+    display: none; align-items: center; gap: 6px;
+    font-family: 'Poppins', Arial, sans-serif;
+    font-size: 11px; color: var(--muted); padding: 5px 10px;
+    border: 1px solid var(--line); border-radius: 999px; background: var(--panel);
+  }
 </style>
 </head>
 <body>
@@ -361,10 +428,16 @@
     </div>
   </div>
   <div class="header-right">
+    <div class="sync-status" id="sync-status" title="Cloud sync status">
+      <span class="dot"></span><span class="lbl">Synced</span>
+    </div>
+    <div class="user-chip" id="user-chip"><span id="user-email"></span></div>
     <button class="btn ghost sm" id="btn-add-event">+ Add event</button>
     <button class="btn ghost sm" id="btn-export-png">Export PNG</button>
     <button class="btn ghost sm" id="btn-export-pdf">Export PDF</button>
     <button class="btn ghost sm" id="btn-reset" title="Wipe all data and start over">Reset</button>
+    <button class="btn ghost sm" id="btn-signin" style="display:none" title="Sign in to sync across devices">Sign in</button>
+    <button class="btn ghost sm" id="btn-signout" style="display:none">Sign out</button>
     <button class="theme-toggle" id="theme-toggle" title="Toggle dark mode" aria-label="Toggle dark mode">
       <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
       <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
@@ -418,6 +491,30 @@
       </div>
       <div id="shop-content"></div>
     </div>
+  </div>
+</div>
+
+<!-- ============== AUTH SCREEN ============== -->
+<div class="auth-screen hidden" id="auth-screen">
+  <div class="auth-card">
+    <button class="auth-close" id="auth-close" aria-label="Close" title="Close">×</button>
+    <div class="auth-brand">
+      <h1>Sign in to sync</h1>
+      <p>Cross-device access for authorized users</p>
+    </div>
+    <form id="signin-form" autocomplete="on">
+      <div class="field">
+        <label for="auth-email">Email</label>
+        <input type="email" id="auth-email" required autocomplete="email" />
+      </div>
+      <div class="field">
+        <label for="auth-password">Password</label>
+        <input type="password" id="auth-password" required autocomplete="current-password" />
+      </div>
+      <div class="auth-error" id="auth-error"></div>
+      <button type="submit" class="btn auth-submit" id="auth-submit">Sign in</button>
+      <button type="button" class="auth-link" id="auth-forgot">Forgot password?</button>
+    </form>
   </div>
 </div>
 
@@ -691,19 +788,207 @@ const MEAL_PRESETS = {
 };
 
 /* ============================================================
+   CLOUD CONFIG — replace these with your Supabase credentials
+   ============================================================ */
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+
+/* ============================================================
    STATE & PERSISTENCE
+   ----------------------------------------------------------------
+   localStorage is the always-on local cache and the source of truth
+   when signed out. When signed in, the app additionally syncs the
+   same state to a shared row in Supabase so other authorized users
+   see live updates.
    ============================================================ */
 const LS_KEY = 'wedding-planner-v1';
-let state = loadState();
+let state = loadLocalState();
+let sb = null;                // Supabase client (null until configured)
+let currentUser = null;       // signed-in user, or null
+let saveTimer = null;
+let myLastWriteAt = 0;        // to ignore realtime echoes of our own writes
 
-function loadState() {
+function loadLocalState() {
   try {
     const raw = localStorage.getItem(LS_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed.events) return parsed;
+    }
   } catch (e) {}
   return seedState();
 }
-function saveState() { localStorage.setItem(LS_KEY, JSON.stringify(state)); }
+function saveLocalCache() {
+  try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) {}
+}
+
+function isSupabaseConfigured() {
+  return typeof SUPABASE_URL === 'string'
+      && SUPABASE_URL.startsWith('https://')
+      && !SUPABASE_URL.includes('YOUR_')
+      && SUPABASE_ANON_KEY && !SUPABASE_ANON_KEY.includes('YOUR_');
+}
+
+function saveState() {
+  // Always persist locally so the app works offline / signed out.
+  saveLocalCache();
+  // Debounced cloud write only if signed in.
+  if (!sb || !currentUser) return;
+  if (saveTimer) clearTimeout(saveTimer);
+  setSyncStatus('saving', 'Saving…');
+  saveTimer = setTimeout(async () => {
+    try {
+      myLastWriteAt = Date.now();
+      const { error } = await sb
+        .from('planner_state')
+        .update({ data: state })
+        .eq('id', 1);
+      if (error) throw error;
+      setSyncStatus('synced', 'Synced');
+    } catch (err) {
+      console.error('Save failed:', err);
+      setSyncStatus('error', 'Save failed');
+    }
+  }, 600);
+}
+
+async function saveStateImmediate() {
+  saveLocalCache();
+  if (!sb || !currentUser) return;
+  try {
+    myLastWriteAt = Date.now();
+    const { error } = await sb
+      .from('planner_state')
+      .upsert({ id: 1, data: state });
+    if (error) throw error;
+    setSyncStatus('synced', 'Synced');
+  } catch (err) {
+    console.error('Immediate save failed:', err);
+    setSyncStatus('error', 'Save failed');
+  }
+}
+
+function subscribeToRealtime() {
+  if (!sb) return;
+  sb.channel('planner_changes')
+    .on('postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'planner_state', filter: 'id=eq.1' },
+        (payload) => {
+          // Ignore the echo of our own writes
+          const updatedAt = new Date(payload.new.updated_at).getTime();
+          if (Math.abs(updatedAt - myLastWriteAt) < 2000) return;
+          state = payload.new.data;
+          renderAll();
+          setSyncStatus('synced', 'Updated from cloud');
+        })
+    .subscribe();
+}
+
+function setSyncStatus(status, label) {
+  const el = document.getElementById('sync-status');
+  if (!el) return;
+  el.classList.remove('synced', 'saving', 'error');
+  el.classList.add(status);
+  if (label) el.querySelector('.lbl').textContent = label;
+}
+
+function showAuthScreen(errorMsg) {
+  document.getElementById('auth-screen').classList.remove('hidden');
+  const errorEl = document.getElementById('auth-error');
+  errorEl.classList.remove('success');
+  errorEl.textContent = errorMsg || '';
+}
+function hideAuthScreen() {
+  document.getElementById('auth-screen').classList.add('hidden');
+}
+
+function renderAll() {
+  document.getElementById('default-people').value = state.defaultPeople;
+  document.getElementById('usd-rate').value = (state.usdRate || 1.10).toFixed(2);
+  renderCalendar();
+  renderShopping();
+  renderHeaderTotal();
+}
+
+async function afterSignIn() {
+  hideAuthScreen();
+  document.getElementById('btn-signin').style.display = 'none';
+  document.getElementById('btn-signout').style.display = 'inline-flex';
+  document.getElementById('sync-status').style.display = 'inline-flex';
+  document.getElementById('user-chip').style.display = 'inline-flex';
+  document.getElementById('user-email').textContent = currentUser.email;
+
+  // Merge local-vs-cloud: prefer cloud when it has data; otherwise upload local.
+  setSyncStatus('saving', 'Loading…');
+  const { data: row, error } = await sb
+    .from('planner_state')
+    .select('data, updated_at')
+    .eq('id', 1)
+    .maybeSingle();
+  if (error) {
+    setSyncStatus('error', 'Load failed');
+    console.error('Load failed:', error);
+    return;
+  }
+  const cloudState = row && row.data;
+  const cloudHasData = cloudState && cloudState.events && cloudState.events.length > 0;
+  if (cloudHasData) {
+    state = cloudState;
+    if (state.defaultPeople == null) state.defaultPeople = 25;
+    if (state.usdRate == null) state.usdRate = 1.10;
+    if (!state.priceOverrides) state.priceOverrides = {};
+    if (!state.checked) state.checked = {};
+    saveLocalCache();
+    setSyncStatus('synced', 'Synced');
+  } else {
+    // Cloud is empty — push the current local state up.
+    await saveStateImmediate();
+  }
+
+  subscribeToRealtime();
+  renderAll();
+}
+
+async function initApp() {
+  // Render immediately from localStorage — app works offline / signed out.
+  renderAll();
+
+  if (!isSupabaseConfigured()) {
+    // Cloud sync not set up — hide the sign-in option entirely.
+    const btn = document.getElementById('btn-signin');
+    if (btn) btn.style.display = 'none';
+    return;
+  }
+
+  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+  });
+
+  // Show the Sign in button now that cloud is available.
+  document.getElementById('btn-signin').style.display = 'inline-flex';
+
+  // If a previous session is still valid, transition straight into signed-in mode.
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    currentUser = session.user;
+    await afterSignIn();
+  }
+
+  // React to auth state changes (sign-in / sign-out, including from other tabs).
+  sb.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'SIGNED_IN' && session) {
+      currentUser = session.user;
+      await afterSignIn();
+    } else if (event === 'SIGNED_OUT') {
+      currentUser = null;
+      document.getElementById('btn-signin').style.display = 'inline-flex';
+      document.getElementById('btn-signout').style.display = 'none';
+      document.getElementById('sync-status').style.display = 'none';
+      document.getElementById('user-chip').style.display = 'none';
+      // Keep current state — it remains the local cache.
+    }
+  });
+}
 
 function seedState() {
   // Pre-populate with a sensible starter schedule
@@ -1339,13 +1624,11 @@ document.querySelectorAll('.tab').forEach(t => {
 document.getElementById('btn-add-event').addEventListener('click', () => openModal(null, { date: DAYS[0].date, startHour: 12, startMin: 0, endHour: 13, endMin: 0 }));
 document.getElementById('btn-export-png').addEventListener('click', exportPNG);
 document.getElementById('btn-export-pdf').addEventListener('click', exportPDF);
-document.getElementById('btn-reset').addEventListener('click', () => {
-  if (confirm('Wipe all events and start fresh? (Your data will be lost.)')) {
-    localStorage.removeItem(LS_KEY);
+document.getElementById('btn-reset').addEventListener('click', async () => {
+  if (confirm('Wipe all events and start fresh? This affects everyone using the planner.')) {
     state = seedState();
-    saveState();
-    renderCalendar();
-    renderShopping();
+    await saveStateImmediate();
+    renderAll();
   }
 });
 document.getElementById('default-people').addEventListener('input', e => {
@@ -1369,17 +1652,68 @@ document.getElementById('theme-toggle').addEventListener('click', () => {
   try { localStorage.setItem('wedding-planner-theme', next); } catch (e) {}
 });
 
+// Auth: sign in
+document.getElementById('signin-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if (!sb) return;
+  const email = document.getElementById('auth-email').value.trim();
+  const password = document.getElementById('auth-password').value;
+  const errorEl = document.getElementById('auth-error');
+  errorEl.classList.remove('success');
+  errorEl.textContent = '';
+  const btn = document.getElementById('auth-submit');
+  btn.disabled = true; btn.textContent = 'Signing in…';
+  try {
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) errorEl.textContent = error.message;
+  } catch (err) {
+    errorEl.textContent = err.message;
+  } finally {
+    btn.disabled = false; btn.textContent = 'Sign in';
+  }
+});
+
+// Auth: forgot password (sends reset email)
+document.getElementById('auth-forgot').addEventListener('click', async () => {
+  if (!sb) return;
+  const email = document.getElementById('auth-email').value.trim();
+  const errorEl = document.getElementById('auth-error');
+  errorEl.classList.remove('success');
+  if (!email) { errorEl.textContent = 'Enter your email above first, then click again.'; return; }
+  try {
+    const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin });
+    if (error) throw error;
+    errorEl.classList.add('success');
+    errorEl.textContent = 'Reset link sent — check your email.';
+  } catch (err) {
+    errorEl.textContent = err.message;
+  }
+});
+
+// Auth: sign out
+document.getElementById('btn-signout').addEventListener('click', async () => {
+  if (!sb) return;
+  if (confirm('Sign out? The planner will keep working with your data stored on this device.')) await sb.auth.signOut();
+});
+
+// Auth: open / close the sign-in card
+document.getElementById('btn-signin').addEventListener('click', () => {
+  showAuthScreen();
+  setTimeout(() => document.getElementById('auth-email').focus(), 50);
+});
+document.getElementById('auth-close').addEventListener('click', hideAuthScreen);
+document.getElementById('auth-screen').addEventListener('click', (e) => {
+  // close on backdrop click
+  if (e.target.id === 'auth-screen') hideAuthScreen();
+});
+
 // Modal close on backdrop click
 document.getElementById('event-modal').addEventListener('click', e => {
   if (e.target.id === 'event-modal') closeModal();
 });
 
-// Initial render
-document.getElementById('default-people').value = state.defaultPeople;
-document.getElementById('usd-rate').value = (state.usdRate || 1.10).toFixed(2);
-renderCalendar();
-renderShopping();
-renderHeaderTotal();
+// Boot: authenticate, fetch shared state, subscribe to realtime updates, then render.
+initApp();
 </script>
 </body>
 </html>
