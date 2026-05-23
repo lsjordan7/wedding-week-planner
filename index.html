@@ -50,6 +50,22 @@
   .header-title .sub { color: var(--muted); font-size: 13px; margin-top: 2px; letter-spacing: 0.4px; }
   .header-right { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 
+  .header-totals {
+    display: flex; align-items: center; gap: 16px;
+    background: #faf6ee; border: 1px solid var(--line); border-radius: 12px;
+    padding: 8px 16px;
+  }
+  .header-totals .ht-col { display: flex; flex-direction: column; line-height: 1.1; }
+  .header-totals .ht-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); font-weight: 700; margin-bottom: 2px; }
+  .header-totals .ht-eur { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 700; color: var(--accent-deep); }
+  .header-totals .ht-usd { font-size: 14px; color: var(--muted); font-weight: 600; }
+  .header-totals .ht-divider { width: 1px; height: 32px; background: var(--line); }
+  .header-totals .ht-rate { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--muted); }
+  .header-totals .ht-rate input {
+    width: 56px; padding: 3px 6px; border: 1px solid var(--line); border-radius: 6px;
+    font: inherit; font-size: 12px; text-align: right;
+  }
+
   /* Buttons */
   .btn {
     background: var(--accent); color: #fff; border: 0; padding: 10px 16px; border-radius: 999px;
@@ -240,6 +256,21 @@
   <div class="header-title">
     <h1>Loire Valley Wedding Week</h1>
     <div class="sub">Tue 9 — Mon 15 June 2026  ·  Wedding day: Saturday 13 June</div>
+  </div>
+  <div class="header-totals" title="Live shopping list total across all events. Edit the rate to change the USD conversion.">
+    <div class="ht-col">
+      <div class="ht-label">Shopping total</div>
+      <div class="ht-eur" id="header-eur">€0.00</div>
+    </div>
+    <div class="ht-divider"></div>
+    <div class="ht-col">
+      <div class="ht-label">≈ USD</div>
+      <div class="ht-usd" id="header-usd">$0.00</div>
+    </div>
+    <div class="ht-rate">
+      <label for="usd-rate">Rate</label>
+      <input type="number" step="0.01" min="0" id="usd-rate" />
+    </div>
   </div>
   <div class="header-right">
     <button class="btn ghost sm" id="btn-add-event">+ Add event</button>
@@ -586,6 +617,7 @@ function seedState() {
   // Pre-populate with a sensible starter schedule
   return {
     defaultPeople: 25,
+    usdRate: 1.10,
     events: [
       mkEvent('Arrival & settle in',        '2026-06-09', 16, 0, 18, 0, 'travel',   25, 'Check into château, distribute keys'),
       mkEvent('Welcome aperitif',           '2026-06-09', 18, 30, 20, 0, 'other',  25, 'Champagne on the terrace'),
@@ -1003,6 +1035,32 @@ function closeModal() {
 /* ============================================================
    SHOPPING LIST
    ============================================================ */
+function computeShoppingTotal() {
+  const agg = {};
+  state.events.forEach(ev => {
+    (ev.food || []).forEach(f => {
+      const qty = (f.perPerson || 0) * (ev.people || 0);
+      agg[f.name] = (agg[f.name] || 0) + qty;
+    });
+  });
+  let total = 0;
+  Object.entries(agg).forEach(([name, totalQty]) => {
+    const lib = FOOD_LIBRARY.find(f => f.name === name);
+    if (!lib) return;
+    const packs = Math.ceil(totalQty / lib.packageSize);
+    const price = state.priceOverrides[name] !== undefined ? state.priceOverrides[name] : lib.packagePrice;
+    total += packs * price;
+  });
+  return total;
+}
+
+function renderHeaderTotal() {
+  const eur = computeShoppingTotal();
+  const rate = state.usdRate || 1.10;
+  document.getElementById('header-eur').textContent = '€' + eur.toFixed(2);
+  document.getElementById('header-usd').textContent = '$' + (eur * rate).toFixed(2);
+}
+
 function renderShopping() {
   const out = document.getElementById('shop-content');
 
@@ -1071,6 +1129,7 @@ function renderShopping() {
 
   out.innerHTML = html;
   document.getElementById('shop-grand-total').textContent = '€' + grandTotal.toFixed(2);
+  renderHeaderTotal();
 
   // Wire up checkboxes & price overrides
   out.querySelectorAll('tr[data-name]').forEach(tr => {
@@ -1202,6 +1261,15 @@ document.getElementById('default-people').addEventListener('input', e => {
   saveState();
 });
 
+document.getElementById('usd-rate').addEventListener('input', e => {
+  const v = parseFloat(e.target.value);
+  if (!isNaN(v) && v > 0) {
+    state.usdRate = v;
+    saveState();
+    renderHeaderTotal();
+  }
+});
+
 // Modal close on backdrop click
 document.getElementById('event-modal').addEventListener('click', e => {
   if (e.target.id === 'event-modal') closeModal();
@@ -1209,8 +1277,10 @@ document.getElementById('event-modal').addEventListener('click', e => {
 
 // Initial render
 document.getElementById('default-people').value = state.defaultPeople;
+document.getElementById('usd-rate').value = (state.usdRate || 1.10).toFixed(2);
 renderCalendar();
 renderShopping();
+renderHeaderTotal();
 </script>
 </body>
 </html>
