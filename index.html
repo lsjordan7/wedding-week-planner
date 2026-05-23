@@ -1843,65 +1843,99 @@ function dateShort(d) {
 }
 
 /* ============================================================
-   EXPORT — PNG + PDF
+   EXPORT — always exports the SHOPPING LIST in portrait, since
+   that's what you actually print and bring to the store.
    ============================================================ */
+async function prepareForShoppingExport() {
+  // Make sure the modal isn't on screen.
+  closeModal();
+
+  // If the user is on the calendar tab, temporarily reveal the shopping view
+  // off-screen for capture. We don't want the export to disturb their current view.
+  const shopView = document.getElementById('view-shopping');
+  const wasHidden = shopView.classList.contains('hidden');
+  let revealStyle = null;
+  if (wasHidden) {
+    revealStyle = { display: shopView.style.display, position: shopView.style.position, left: shopView.style.left, top: shopView.style.top };
+    shopView.classList.remove('hidden');
+    shopView.style.position = 'absolute';
+    shopView.style.left = '-99999px';
+    shopView.style.top = '0';
+    shopView.style.display = 'block';
+  }
+
+  // Force light theme during capture so the print is high-contrast / ink-friendly.
+  const origTheme = document.documentElement.getAttribute('data-theme') || 'light';
+  if (origTheme === 'dark') document.documentElement.setAttribute('data-theme', 'light');
+
+  // Re-render so latest state is reflected.
+  renderShopping();
+
+  // Wait for the browser to paint the new layout / theme.
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+  return function restore() {
+    if (origTheme === 'dark') document.documentElement.setAttribute('data-theme', origTheme);
+    if (wasHidden) {
+      shopView.classList.add('hidden');
+      shopView.style.display = revealStyle.display || '';
+      shopView.style.position = revealStyle.position || '';
+      shopView.style.left = revealStyle.left || '';
+      shopView.style.top = revealStyle.top || '';
+    }
+  };
+}
+
 async function exportPNG() {
-  const view = currentView();
-  const node = document.getElementById(view === 'calendar' ? 'capture-calendar' : 'capture-shopping');
-  // For calendar, temporarily expand so the full grid is captured (not just the visible scroll area)
-  const body = document.getElementById('cal-body');
-  const prevMax = body ? body.style.maxHeight : null;
-  if (view === 'calendar' && body) body.style.maxHeight = 'none';
-
-  const canvas = await html2canvas(node, { backgroundColor: '#f7f5f1', scale: 2 });
-
-  if (view === 'calendar' && body) body.style.maxHeight = prevMax;
-
-  const a = document.createElement('a');
-  a.href = canvas.toDataURL('image/png');
-  a.download = `wedding-${view}-${stamp()}.png`;
-  a.click();
+  const restore = await prepareForShoppingExport();
+  try {
+    const node = document.getElementById('capture-shopping');
+    const canvas = await html2canvas(node, { backgroundColor: '#ffffff', scale: 2 });
+    const a = document.createElement('a');
+    a.href = canvas.toDataURL('image/png');
+    a.download = `costco-shopping-list-${stamp()}.png`;
+    a.click();
+  } finally {
+    restore();
+  }
 }
 
 async function exportPDF() {
-  const view = currentView();
-  const node = document.getElementById(view === 'calendar' ? 'capture-calendar' : 'capture-shopping');
-  const body = document.getElementById('cal-body');
-  const prevMax = body ? body.style.maxHeight : null;
-  if (view === 'calendar' && body) body.style.maxHeight = 'none';
+  const restore = await prepareForShoppingExport();
+  try {
+    const node = document.getElementById('capture-shopping');
+    const canvas = await html2canvas(node, { backgroundColor: '#ffffff', scale: 2 });
 
-  const canvas = await html2canvas(node, { backgroundColor: '#ffffff', scale: 2 });
-  if (view === 'calendar' && body) body.style.maxHeight = prevMax;
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+    const margin = 32;
+    const usableW = pageW - margin * 2;
+    const usableH = pageH - margin * 2;
 
-  const { jsPDF } = window.jspdf;
-  const isLandscape = view === 'calendar';
-  const pdf = new jsPDF({ orientation: isLandscape ? 'landscape' : 'portrait', unit: 'pt', format: 'a4' });
-  const pageW = pdf.internal.pageSize.getWidth();
-  const pageH = pdf.internal.pageSize.getHeight();
-  const margin = 24;
-  const usableW = pageW - margin * 2;
-  const ratio = canvas.height / canvas.width;
-  const imgW = usableW;
-  const imgH = imgW * ratio;
-  const imgData = canvas.toDataURL('image/png');
+    const ratio = canvas.height / canvas.width;
+    const imgW = usableW;
+    const imgH = imgW * ratio;
+    const imgData = canvas.toDataURL('image/png');
 
-  if (imgH <= pageH - margin * 2) {
-    pdf.addImage(imgData, 'PNG', margin, margin, imgW, imgH);
-  } else {
-    // Slice across pages
-    const pageImageH = pageH - margin * 2;
-    const totalPages = Math.ceil(imgH / pageImageH);
-    for (let i = 0; i < totalPages; i++) {
-      if (i > 0) pdf.addPage();
-      // Draw the full image, offset, with clipping
-      pdf.addImage(imgData, 'PNG', margin, margin - i * pageImageH, imgW, imgH);
-      // Cover everything above/below the visible window with white
-      pdf.setFillColor(255, 255, 255);
-      pdf.rect(0, 0, pageW, margin, 'F');
-      pdf.rect(0, pageH - margin, pageW, margin, 'F');
+    if (imgH <= usableH) {
+      pdf.addImage(imgData, 'PNG', margin, margin, imgW, imgH);
+    } else {
+      const totalPages = Math.ceil(imgH / usableH);
+      for (let i = 0; i < totalPages; i++) {
+        if (i > 0) pdf.addPage();
+        pdf.addImage(imgData, 'PNG', margin, margin - i * usableH, imgW, imgH);
+        // Cover everything outside the page's usable window with white
+        pdf.setFillColor(255, 255, 255);
+        pdf.rect(0, 0, pageW, margin, 'F');
+        pdf.rect(0, pageH - margin, pageW, margin, 'F');
+      }
     }
+    pdf.save(`costco-shopping-list-${stamp()}.pdf`);
+  } finally {
+    restore();
   }
-  pdf.save(`wedding-${view}-${stamp()}.pdf`);
 }
 
 function stamp() {
