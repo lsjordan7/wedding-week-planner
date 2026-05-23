@@ -492,18 +492,22 @@
     }
     .header-totals .ht-rate input { font-size: 13px; }
 
-    /* Action buttons row — horizontal scroll if too many fit */
+    /* Action buttons row — wrap so everything is discoverable; reorder so
+       the high-frequency / account buttons are visible without scrolling */
     .header-right {
       order: 3;
-      overflow-x: auto;
-      flex-wrap: nowrap;
+      width: 100%;
+      flex-wrap: wrap;
+      justify-content: center;
       gap: 6px;
-      padding: 2px 0 4px;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
+      padding: 2px 0;
     }
-    .header-right::-webkit-scrollbar { display: none; }
     .header-right > * { flex-shrink: 0; }
+    /* Promote the most useful buttons to the front of the row */
+    #btn-add-event { order: -3; }
+    #btn-signin, #btn-signout { order: -2; }
+    #theme-toggle { order: -1; }
+    #sync-status, #user-chip { order: 0; }
 
     .tabs { position: sticky; top: 0; padding: 0 12px; }
     .tab { padding: 12px 14px; font-size: 13px; }
