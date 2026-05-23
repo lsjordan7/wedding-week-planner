@@ -435,6 +435,200 @@
     font-size: 11px; color: var(--muted); padding: 5px 10px;
     border: 1px solid var(--line); border-radius: 999px; background: var(--panel);
   }
+
+  /* ===========================================================
+     RESPONSIVE — iPad (portrait), phone (any orientation)
+     =========================================================== */
+
+  /* Tablet — keep the 7-day grid but tighten chrome */
+  @media (max-width: 1023px) {
+    .header { padding: 14px 18px; }
+    .header-title h1 { font-size: 22px; }
+    .header-title .sub { font-size: 12px; }
+    .view { padding: 16px 18px; }
+    .tabs { padding: 0 18px; }
+    .settings-bar { padding: 10px 14px; gap: 10px; }
+    .header-totals { gap: 12px; padding: 6px 12px; }
+    .header-totals .ht-eur { font-size: 19px; }
+    .header-totals .ht-budget-input input { width: 72px; font-size: 17px; }
+    .header-totals .ht-usd { font-size: 13px; }
+    .modal { max-width: 92vw; }
+  }
+
+  /* Phone — substantial restructure */
+  @media (max-width: 767px) {
+    /* Header stacks vertically: title → totals → action row */
+    .header {
+      padding: 10px 14px 8px;
+      gap: 10px;
+      flex-direction: column;
+      align-items: stretch;
+      position: relative; /* unstick so tabs can sit normally below */
+    }
+    .header-title { text-align: center; }
+    .header-title h1 { font-size: 19px; }
+    .header-title .sub { font-size: 11px; margin-top: 2px; }
+
+    .header-totals {
+      order: 2;
+      width: 100%;
+      margin: 0;
+      padding: 10px 12px;
+      gap: 10px 14px;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .header-totals .ht-divider { display: none; }
+    .header-totals .ht-col { flex: 0 1 auto; min-width: 0; }
+    .header-totals .ht-eur { font-size: 18px; }
+    .header-totals .ht-delta { font-size: 10px; margin-top: 2px; min-height: 12px; }
+    .header-totals .ht-budget-input input { width: 78px; font-size: 16px; }
+    .header-totals .ht-budget-input .prefix { font-size: 16px; }
+    .header-totals .ht-usd { font-size: 14px; }
+    .header-totals .ht-rate {
+      width: 100%; justify-content: flex-end;
+      padding-top: 8px; border-top: 1px solid var(--line); margin-top: 2px;
+    }
+    .header-totals .ht-rate input { font-size: 13px; }
+
+    /* Action buttons row — horizontal scroll if too many fit */
+    .header-right {
+      order: 3;
+      overflow-x: auto;
+      flex-wrap: nowrap;
+      gap: 6px;
+      padding: 2px 0 4px;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .header-right::-webkit-scrollbar { display: none; }
+    .header-right > * { flex-shrink: 0; }
+
+    .tabs { position: sticky; top: 0; padding: 0 12px; }
+    .tab { padding: 12px 14px; font-size: 13px; }
+
+    .view { padding: 12px; }
+
+    /* Settings bar stacks */
+    .settings-bar { flex-direction: column; align-items: stretch; gap: 10px; padding: 12px; }
+    .settings-bar .hint { font-size: 11px; }
+    .settings-bar input[type="number"], .settings-bar input[type="text"] { width: 100%; font-size: 16px; }
+
+    /* Calendar: horizontally scroll the whole grid, hour labels stick left */
+    .cal-wrap { overflow: auto; max-height: calc(100dvh - 320px); border-radius: 10px; }
+    .cal-header, .cal-body {
+      grid-template-columns: 50px repeat(7, minmax(96px, 1fr));
+      min-width: 750px;
+    }
+    .cal-body { max-height: none; overflow: visible; }
+    .cal-header { position: sticky; top: 0; z-index: 7; }
+    .cal-header .corner, .cal-body .hour-col {
+      position: sticky; left: 0; z-index: 6;
+      background: var(--panel);
+    }
+    .cal-header .corner { background: var(--panel-2); }
+    .cal-body .hour-col { box-shadow: 1px 0 0 var(--line); }
+    .cal-header .day-head { font-size: 10px; padding: 8px 4px; letter-spacing: 0.4px; }
+    .cal-header .day-head .num { font-size: 18px; }
+    .cal-body .hour { font-size: 10px; padding: 3px 4px; height: 56px; }
+
+    .event { font-size: 11px; padding: 5px 7px; }
+    .event .time { font-size: 10px; }
+    .event .ppl { font-size: 10px; }
+
+    .legend { font-size: 10px; gap: 10px 12px; }
+
+    /* Modal as a bottom sheet */
+    .modal-backdrop { padding: 0; align-items: flex-end; }
+    .modal {
+      max-width: 100%;
+      max-height: 94dvh;
+      border-radius: 14px 14px 0 0;
+      border-bottom: 0;
+      box-shadow: 0 -8px 32px rgba(0,0,0,0.25);
+    }
+    .modal-head { padding: 14px 18px 8px; }
+    .modal-head h2 { font-size: 18px; }
+    .modal-body { padding: 14px 18px; }
+    .modal-foot {
+      padding: 12px 18px calc(14px + env(safe-area-inset-bottom));
+      border-radius: 0;
+      flex-direction: column-reverse; gap: 8px;
+    }
+    .modal-foot > div { display: flex; gap: 8px; }
+    .modal-foot > div .btn { flex: 1; justify-content: center; }
+    .modal-foot .btn.danger { width: 100%; justify-content: center; }
+
+    .row, .row.three { grid-template-columns: 1fr; gap: 10px; }
+
+    /* iOS: 16px+ prevents zoom-on-focus */
+    .field input, .field select, .field textarea { font-size: 16px; padding: 11px 12px; }
+
+    /* Food picker table */
+    .food-section h3 { font-size: 13px; flex-wrap: wrap; gap: 6px; display: flex; align-items: center; }
+    .food-section h3 .pill { margin-left: 0; }
+    .food-table { font-size: 13px; }
+    .food-table th { font-size: 9px; padding: 6px 3px; }
+    .food-table td { padding: 8px 3px; }
+    .food-table input[type=number] { width: 56px; font-size: 16px; padding: 6px; }
+    .food-table th:nth-of-type(3), .food-table td:nth-of-type(3) { display: none; } /* hide "Unit" col */
+    .food-table th:nth-of-type(5), .food-table td:nth-of-type(5) { display: none; } /* hide "Category" col */
+
+    /* Shopping list */
+    .shop-wrap { padding: 16px 14px; }
+    .shop-head { flex-direction: column; align-items: flex-start; gap: 10px; padding-bottom: 12px; }
+    .shop-head h2 { font-size: 18px; }
+    .shop-total { font-size: 24px; align-self: flex-start; }
+
+    /* Shop table → card-style rows */
+    .shop-table thead { display: none; }
+    .shop-table tr {
+      display: grid;
+      grid-template-columns: 28px 1fr auto;
+      grid-template-areas:
+        "check name    total"
+        "check meta    meta"
+        "check price   price";
+      gap: 2px 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--line-soft);
+      align-items: center;
+    }
+    .shop-table td { padding: 0; border: 0; display: block; }
+    .shop-table td.checkbox { grid-area: check; align-self: start; padding-top: 2px; }
+    .shop-table td:nth-of-type(2) { grid-area: name; font-size: 13px; }
+    .shop-table td.qty:nth-of-type(3) { display: none; } /* hide "Need" col on phone */
+    .shop-table td.qty:nth-of-type(4) {
+      grid-area: meta; font-size: 11px; color: var(--muted);
+      text-align: left; padding-top: 2px;
+    }
+    .shop-table td.price { grid-area: price; padding-top: 4px; text-align: left; }
+    .shop-table td.price input { text-align: left; font-size: 16px; padding: 6px 8px; width: 90px; }
+    .shop-table td.total { grid-area: total; font-size: 18px; align-self: start; padding-top: 0; }
+    .shop-table .usage { font-size: 11px; line-height: 1.35; }
+
+    /* Tap-friendly buttons */
+    .btn.sm { padding: 9px 14px; font-size: 13px; min-height: 36px; }
+    .theme-toggle { width: 38px; height: 38px; }
+
+    /* Auth card */
+    .auth-screen { padding: 14px; }
+    .auth-card { padding: 28px 22px; }
+    .auth-card .field input { font-size: 16px; }
+  }
+
+  /* Very small phones (iPhone SE etc.) */
+  @media (max-width: 419px) {
+    .header-title h1 { font-size: 18px; }
+    .header-totals { padding: 8px 10px; gap: 8px 12px; }
+    .header-totals .ht-label { font-size: 8px; letter-spacing: 0.5px; }
+    .header-totals .ht-eur { font-size: 17px; }
+    .header-totals .ht-budget-input input { width: 68px; font-size: 15px; }
+    .header-totals .ht-usd { font-size: 13px; }
+    .shop-head h2 { font-size: 17px; }
+    .shop-total { font-size: 22px; }
+  }
 </style>
 </head>
 <body>
