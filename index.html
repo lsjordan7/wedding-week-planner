@@ -1,0 +1,1216 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Loire Valley Wedding Week — Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #f7f5f1;
+    --panel: #ffffff;
+    --ink: #2b2a28;
+    --muted: #7a766f;
+    --line: #e7e3da;
+    --accent: #8b6f47;       /* warm bronze */
+    --accent-deep: #5e4a2d;
+    --rose: #d4a59a;
+    --gold: #c9a96a;
+    --shadow: 0 1px 2px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.06);
+
+    /* Event type colors */
+    --c-breakfast: #fde2a7;
+    --c-brunch:    #f6c98c;
+    --c-lunch:     #b8d8a6;
+    --c-dinner:    #c4a4d3;
+    --c-sightsee:  #a4c8e1;
+    --c-wedding:   #f1b6c0;
+    --c-travel:    #cfcabb;
+    --c-other:     #e5e0d3;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: 'Inter', system-ui, sans-serif; }
+  body { min-height: 100vh; }
+
+  /* Header */
+  .header {
+    background: linear-gradient(135deg, #ffffff 0%, #faf6ee 100%);
+    border-bottom: 1px solid var(--line);
+    padding: 22px 28px;
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;
+    position: sticky; top: 0; z-index: 50;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.02);
+  }
+  .header-title h1 { font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: 30px; margin: 0; letter-spacing: 0.3px; }
+  .header-title .sub { color: var(--muted); font-size: 13px; margin-top: 2px; letter-spacing: 0.4px; }
+  .header-right { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+  /* Buttons */
+  .btn {
+    background: var(--accent); color: #fff; border: 0; padding: 10px 16px; border-radius: 999px;
+    font-size: 13px; font-weight: 600; cursor: pointer; letter-spacing: 0.3px;
+    transition: transform .12s, background .12s, box-shadow .12s;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn:hover { background: var(--accent-deep); transform: translateY(-1px); box-shadow: var(--shadow); }
+  .btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+  .btn.ghost:hover { background: #fff; border-color: var(--accent); color: var(--accent-deep); }
+  .btn.danger { background: #c45a4f; }
+  .btn.danger:hover { background: #a44438; }
+  .btn.sm { padding: 6px 12px; font-size: 12px; }
+
+  /* Tabs */
+  .tabs {
+    display: flex; gap: 4px; padding: 8px 28px 0; border-bottom: 1px solid var(--line); background: var(--bg);
+    position: sticky; top: 78px; z-index: 40;
+  }
+  .tab {
+    padding: 10px 18px; border: 0; background: transparent; cursor: pointer; font-size: 13px; font-weight: 600;
+    color: var(--muted); border-bottom: 2px solid transparent; letter-spacing: 0.3px;
+  }
+  .tab.active { color: var(--accent-deep); border-bottom-color: var(--accent); }
+  .tab:hover { color: var(--ink); }
+
+  .view { padding: 22px 28px; }
+  .view.hidden { display: none; }
+
+  /* Settings bar */
+  .settings-bar {
+    display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-bottom: 16px;
+    background: var(--panel); padding: 12px 16px; border-radius: 12px; border: 1px solid var(--line);
+  }
+  .settings-bar label { font-size: 12px; color: var(--muted); display: flex; flex-direction: column; gap: 4px; }
+  .settings-bar input[type="number"], .settings-bar input[type="text"] {
+    border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; font: inherit; width: 90px;
+  }
+
+  /* ============== CALENDAR ============== */
+  .cal-wrap {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 14px; overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  .cal-header {
+    display: grid; grid-template-columns: 64px repeat(7, 1fr);
+    background: #faf7f0; border-bottom: 1px solid var(--line);
+  }
+  .cal-header .day-head {
+    padding: 10px 8px; text-align: center; border-left: 1px solid var(--line);
+    font-size: 12px; color: var(--muted); font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase;
+  }
+  .cal-header .day-head .num { display: block; font-family: 'Cormorant Garamond', serif; font-size: 22px; color: var(--ink); font-weight: 600; margin-top: 2px; letter-spacing: 0; }
+  .cal-header .day-head.wedding { background: linear-gradient(180deg, #fff7f1, #ffe7e0); color: var(--accent-deep); }
+  .cal-header .day-head.wedding .num { color: var(--accent-deep); }
+  .cal-header .corner { padding: 10px; font-size: 11px; color: var(--muted); }
+
+  .cal-body {
+    position: relative;
+    display: grid; grid-template-columns: 64px repeat(7, 1fr);
+    max-height: calc(100vh - 280px); overflow-y: auto;
+  }
+  .cal-body .hour-col { border-right: 1px solid var(--line); }
+  .cal-body .hour {
+    height: 56px; padding: 4px 6px; font-size: 11px; color: var(--muted); text-align: right; border-bottom: 1px dashed #f0ece2;
+  }
+  .day-col {
+    position: relative; border-left: 1px solid var(--line);
+    background-image: repeating-linear-gradient(to bottom, transparent 0 55px, #f3efe6 55px 56px);
+  }
+  .day-col.wedding { background-color: #fffaf5; }
+  .day-col .hour-slot {
+    height: 56px; cursor: pointer; transition: background .12s;
+  }
+  .day-col .hour-slot:hover { background: rgba(139,111,71,0.06); }
+
+  .event {
+    position: absolute; left: 4px; right: 4px;
+    border-radius: 8px; padding: 6px 8px; font-size: 12px; line-height: 1.25;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08); cursor: pointer; overflow: hidden;
+    border-left: 3px solid rgba(0,0,0,0.18);
+    transition: transform .12s, box-shadow .12s;
+  }
+  .event:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.12); }
+  .event .title { font-weight: 700; }
+  .event .time { font-size: 10px; opacity: 0.75; margin-top: 2px; }
+  .event .ppl { font-size: 10px; opacity: 0.75; margin-top: 1px; }
+
+  /* ============== MODAL ============== */
+  .modal-backdrop {
+    position: fixed; inset: 0; background: rgba(40,38,34,0.55); display: none; z-index: 100;
+    align-items: center; justify-content: center; padding: 24px;
+  }
+  .modal-backdrop.show { display: flex; }
+  .modal {
+    background: var(--panel); border-radius: 14px; max-width: 720px; width: 100%; max-height: 92vh; overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  }
+  .modal-head { padding: 20px 24px 8px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; }
+  .modal-head h2 { font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: 24px; margin: 0; }
+  .modal-body { padding: 20px 24px; }
+  .modal-foot { padding: 14px 24px 20px; display: flex; justify-content: space-between; gap: 10px; border-top: 1px solid var(--line); }
+  .close-x { background: transparent; border: 0; font-size: 22px; cursor: pointer; color: var(--muted); }
+  .close-x:hover { color: var(--ink); }
+
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+  .field label { font-size: 12px; color: var(--muted); font-weight: 600; letter-spacing: 0.3px; }
+  .field input, .field select, .field textarea {
+    padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; font: inherit; background: #fff;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; border-color: var(--accent); }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .row.three { grid-template-columns: 1fr 1fr 1fr; }
+
+  /* Food planner inside modal */
+  .food-section { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 16px; }
+  .food-section h3 { font-size: 14px; margin: 0 0 10px; letter-spacing: 0.3px; }
+  .food-presets { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  .preset-btn {
+    background: #faf7f0; border: 1px solid var(--line); color: var(--ink); padding: 6px 12px;
+    border-radius: 999px; font-size: 12px; cursor: pointer;
+  }
+  .preset-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  .food-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .food-table th { text-align: left; color: var(--muted); font-weight: 600; padding: 6px 4px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; border-bottom: 1px solid var(--line); }
+  .food-table td { padding: 6px 4px; border-bottom: 1px solid #f3f0e8; vertical-align: middle; }
+  .food-table input[type=number] { width: 64px; padding: 5px 6px; border: 1px solid var(--line); border-radius: 6px; font: inherit; }
+  .food-table input[type=text] { width: 100%; padding: 5px 6px; border: 1px solid var(--line); border-radius: 6px; font: inherit; }
+  .food-table select { padding: 5px 6px; border: 1px solid var(--line); border-radius: 6px; font: inherit; }
+  .food-table .del { background: transparent; border: 0; color: #c45a4f; cursor: pointer; font-size: 16px; }
+  .food-table .qty-calc { color: var(--accent-deep); font-weight: 600; }
+
+  .add-food { margin-top: 10px; display: flex; gap: 8px; align-items: center; }
+
+  /* ============== SHOPPING LIST ============== */
+  .shop-wrap { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 22px 24px; box-shadow: var(--shadow); }
+  .shop-head { display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; }
+  .shop-head h2 { font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: 28px; margin: 0; }
+  .shop-head .sub { color: var(--muted); font-size: 12px; }
+  .shop-total { font-family: 'Cormorant Garamond', serif; font-size: 32px; color: var(--accent-deep); font-weight: 700; }
+  .shop-total .lbl { font-family: 'Inter'; font-size: 11px; color: var(--muted); display: block; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+
+  .cat-group { margin-bottom: 22px; }
+  .cat-group h3 {
+    font-size: 13px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--accent-deep);
+    margin: 0 0 8px; padding-bottom: 4px; border-bottom: 2px solid var(--accent);
+  }
+  .shop-table { width: 100%; border-collapse: collapse; }
+  .shop-table th { text-align: left; color: var(--muted); font-weight: 600; padding: 8px 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; border-bottom: 1px solid var(--line); }
+  .shop-table td { padding: 10px 6px; border-bottom: 1px solid #f3f0e8; font-size: 13px; }
+  .shop-table .checkbox { width: 30px; }
+  .shop-table .qty { text-align: right; font-weight: 600; }
+  .shop-table .price { text-align: right; }
+  .shop-table .total { text-align: right; font-weight: 700; color: var(--accent-deep); }
+  .shop-table tr.checked td { opacity: 0.45; text-decoration: line-through; }
+  .shop-table tr.checked td.checkbox { opacity: 1; text-decoration: none; }
+  .shop-table .usage { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .shop-table .price input { width: 70px; border: 1px solid var(--line); border-radius: 6px; padding: 4px 6px; font: inherit; text-align: right; }
+
+  .empty { text-align: center; color: var(--muted); padding: 40px; font-style: italic; }
+
+  /* Print */
+  @media print {
+    .header, .tabs, .settings-bar, .modal-backdrop, .no-print { display: none !important; }
+    .view { padding: 0; }
+    body { background: #fff; }
+    .cal-wrap, .shop-wrap { border: 0; box-shadow: none; }
+    .cal-body { max-height: none; overflow: visible; }
+  }
+
+  /* Banner */
+  .meal-suggest {
+    background: #fffbef; border: 1px solid #f0e1b4; color: #8a6a17; padding: 8px 12px; border-radius: 8px; font-size: 12px; margin-bottom: 10px;
+  }
+
+  /* Legend */
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 12px; font-size: 11px; color: var(--muted); }
+  .legend .sw { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 5px; vertical-align: -2px; }
+
+  .hint { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .pill { display: inline-block; background: #faf7f0; border: 1px solid var(--line); padding: 2px 10px; border-radius: 999px; font-size: 11px; color: var(--muted); margin-left: 8px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-title">
+    <h1>Loire Valley Wedding Week</h1>
+    <div class="sub">Tue 9 — Mon 15 June 2026  ·  Wedding day: Saturday 13 June</div>
+  </div>
+  <div class="header-right">
+    <button class="btn ghost sm" id="btn-add-event">+ Add event</button>
+    <button class="btn ghost sm" id="btn-export-png">Export PNG</button>
+    <button class="btn ghost sm" id="btn-export-pdf">Export PDF</button>
+    <button class="btn ghost sm" id="btn-reset" title="Wipe all data and start over">Reset</button>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" data-view="calendar">Calendar</button>
+  <button class="tab" data-view="shopping">Costco Shopping List</button>
+</div>
+
+<!-- ============== CALENDAR VIEW ============== -->
+<div class="view" id="view-calendar">
+  <div class="settings-bar no-print">
+    <label>Default guest count
+      <input type="number" id="default-people" min="1" value="25" />
+    </label>
+    <div style="flex:1"></div>
+    <div class="hint">Click any empty time slot to create an event. Click an event to edit it.</div>
+  </div>
+
+  <div id="capture-calendar">
+    <div class="cal-wrap">
+      <div class="cal-header" id="cal-header"></div>
+      <div class="cal-body" id="cal-body"></div>
+    </div>
+    <div class="legend">
+      <span><span class="sw" style="background:var(--c-breakfast)"></span>Breakfast</span>
+      <span><span class="sw" style="background:var(--c-brunch)"></span>Brunch</span>
+      <span><span class="sw" style="background:var(--c-lunch)"></span>Lunch</span>
+      <span><span class="sw" style="background:var(--c-dinner)"></span>Dinner</span>
+      <span><span class="sw" style="background:var(--c-sightsee)"></span>Sightseeing</span>
+      <span><span class="sw" style="background:var(--c-wedding)"></span>Wedding</span>
+      <span><span class="sw" style="background:var(--c-travel)"></span>Travel</span>
+      <span><span class="sw" style="background:var(--c-other)"></span>Other</span>
+    </div>
+  </div>
+</div>
+
+<!-- ============== SHOPPING VIEW ============== -->
+<div class="view hidden" id="view-shopping">
+  <div id="capture-shopping">
+    <div class="shop-wrap">
+      <div class="shop-head">
+        <div>
+          <h2>Costco Paris Shopping List</h2>
+          <div class="sub">Aggregated from all planned events  ·  Prices estimated in EUR (€)  ·  Click any price to edit</div>
+        </div>
+        <div class="shop-total"><span class="lbl">Estimated total</span><span id="shop-grand-total">€0.00</span></div>
+      </div>
+      <div id="shop-content"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============== EVENT MODAL ============== -->
+<div class="modal-backdrop" id="event-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="modal-title">New event</h2>
+      <button class="close-x" data-close>×</button>
+    </div>
+    <div class="modal-body">
+      <div id="meal-suggest-banner"></div>
+
+      <div class="field">
+        <label>Event name</label>
+        <input type="text" id="evt-title" placeholder="e.g., Welcome dinner, Château Chenonceau visit" />
+      </div>
+
+      <div class="row three">
+        <div class="field">
+          <label>Day</label>
+          <select id="evt-date"></select>
+        </div>
+        <div class="field">
+          <label>Start time</label>
+          <input type="time" id="evt-start" />
+        </div>
+        <div class="field">
+          <label>End time</label>
+          <input type="time" id="evt-end" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label>Type / color</label>
+          <select id="evt-type">
+            <option value="breakfast">Breakfast</option>
+            <option value="brunch">Brunch</option>
+            <option value="lunch">Lunch</option>
+            <option value="dinner">Dinner</option>
+            <option value="sightsee">Sightseeing</option>
+            <option value="wedding">Wedding</option>
+            <option value="travel">Travel</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Number of people</label>
+          <input type="number" id="evt-people" min="1" value="25" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Notes (optional)</label>
+        <textarea id="evt-notes" rows="2" placeholder="Location, dress code, transportation, etc."></textarea>
+      </div>
+
+      <div class="food-section" id="food-section">
+        <h3>Food & supplies for this event <span class="pill" id="food-pill">applies to shopping list</span></h3>
+        <div class="food-presets" id="food-presets"></div>
+        <table class="food-table">
+          <thead>
+            <tr>
+              <th style="width:38%">Item</th>
+              <th>Per person</th>
+              <th>Unit</th>
+              <th>For <span id="hdr-people">25</span></th>
+              <th>Category</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="food-rows"></tbody>
+        </table>
+        <div class="add-food">
+          <button class="btn sm ghost" id="add-food-row">+ Add custom item</button>
+          <span class="hint">Quantities auto-scale with guest count. Prices are stored per item in the library below.</span>
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-foot">
+      <button class="btn danger" id="evt-delete">Delete event</button>
+      <div>
+        <button class="btn ghost" data-close>Cancel</button>
+        <button class="btn" id="evt-save">Save event</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   DATA MODEL
+   ============================================================ */
+const DAYS = [
+  { date: '2026-06-09', name: 'Tue', num: 9,  label: 'Arrival' },
+  { date: '2026-06-10', name: 'Wed', num: 10, label: '' },
+  { date: '2026-06-11', name: 'Thu', num: 11, label: '' },
+  { date: '2026-06-12', name: 'Fri', num: 12, label: 'Rehearsal' },
+  { date: '2026-06-13', name: 'Sat', num: 13, label: 'WEDDING', wedding: true },
+  { date: '2026-06-14', name: 'Sun', num: 14, label: 'Brunch' },
+  { date: '2026-06-15', name: 'Mon', num: 15, label: 'Departure' },
+];
+const HOUR_START = 7;   // 07:00
+const HOUR_END = 24;    // midnight (exclusive end label)
+const HOUR_PX = 56;
+
+const TYPE_COLOR = {
+  breakfast: 'var(--c-breakfast)',
+  brunch:    'var(--c-brunch)',
+  lunch:     'var(--c-lunch)',
+  dinner:    'var(--c-dinner)',
+  sightsee:  'var(--c-sightsee)',
+  wedding:   'var(--c-wedding)',
+  travel:    'var(--c-travel)',
+  other:     'var(--c-other)',
+};
+
+/* Costco Paris food library — estimated EUR prices.
+   Each entry: name, category, unit, packageSize, packagePrice, defaultPerPerson */
+const FOOD_LIBRARY = [
+  // Beverages
+  { name: 'Bottled water 1.5L (Cristaline)',         category: 'Beverages', unit: 'bottle',   packageSize: 6,  packagePrice: 3.50, defaultPerPerson: 1.5 },
+  { name: 'Sparkling water 1L (Perrier)',            category: 'Beverages', unit: 'bottle',   packageSize: 6,  packagePrice: 6.50, defaultPerPerson: 0.5 },
+  { name: 'Orange juice 1.5L (Tropicana)',           category: 'Beverages', unit: 'L',        packageSize: 1.5,packagePrice: 4.20, defaultPerPerson: 0.25 },
+  { name: 'Apple juice 1L',                          category: 'Beverages', unit: 'L',        packageSize: 1,  packagePrice: 2.20, defaultPerPerson: 0.2 },
+  { name: 'Coca-Cola 1.5L',                          category: 'Beverages', unit: 'bottle',   packageSize: 6,  packagePrice: 9.00, defaultPerPerson: 0.5 },
+  { name: 'Coffee beans (Lavazza 1kg)',              category: 'Beverages', unit: 'cup',      packageSize: 120,packagePrice: 18.00,defaultPerPerson: 2 },
+  { name: 'Tea bags (assorted box of 100)',          category: 'Beverages', unit: 'bag',      packageSize: 100,packagePrice: 8.00, defaultPerPerson: 1 },
+  { name: 'Milk 1L UHT (pack of 6)',                 category: 'Beverages', unit: 'L',        packageSize: 6,  packagePrice: 6.50, defaultPerPerson: 0.2 },
+  { name: 'Champagne (Cuvée brut)',                  category: 'Beverages', unit: 'glass',    packageSize: 6,  packagePrice: 22.00,defaultPerPerson: 2 },
+  { name: 'Red wine — Bordeaux',                     category: 'Beverages', unit: 'glass',    packageSize: 5,  packagePrice: 11.00,defaultPerPerson: 2 },
+  { name: 'White wine — Sancerre',                   category: 'Beverages', unit: 'glass',    packageSize: 5,  packagePrice: 13.00,defaultPerPerson: 2 },
+  { name: 'Rosé Provence',                           category: 'Beverages', unit: 'glass',    packageSize: 5,  packagePrice: 10.00,defaultPerPerson: 1 },
+  { name: 'Beer — Kronenbourg (24 pack)',            category: 'Beverages', unit: 'bottle',   packageSize: 24, packagePrice: 22.00,defaultPerPerson: 2 },
+
+  // Bakery
+  { name: 'Croissants (pack of 12)',                 category: 'Bakery',    unit: 'piece',    packageSize: 12, packagePrice: 8.50, defaultPerPerson: 1.5 },
+  { name: 'Pain au chocolat (pack of 12)',           category: 'Bakery',    unit: 'piece',    packageSize: 12, packagePrice: 9.00, defaultPerPerson: 1 },
+  { name: 'Baguette',                                category: 'Bakery',    unit: 'piece',    packageSize: 1,  packagePrice: 1.20, defaultPerPerson: 0.33 },
+  { name: 'Pain de mie / sandwich bread loaf',       category: 'Bakery',    unit: 'slice',    packageSize: 24, packagePrice: 3.20, defaultPerPerson: 2 },
+  { name: 'Brioche tressée',                         category: 'Bakery',    unit: 'slice',    packageSize: 12, packagePrice: 5.50, defaultPerPerson: 1 },
+  { name: 'Mini pastries assortment',                category: 'Bakery',    unit: 'piece',    packageSize: 30, packagePrice: 14.00,defaultPerPerson: 2 },
+
+  // Dairy
+  { name: 'Eggs (tray of 30)',                       category: 'Dairy',     unit: 'egg',      packageSize: 30, packagePrice: 7.50, defaultPerPerson: 2 },
+  { name: 'Butter (250g, pack of 4)',                category: 'Dairy',     unit: 'g',        packageSize: 1000,packagePrice: 9.50,defaultPerPerson: 20 },
+  { name: 'Yogurt (12 pack, individual)',            category: 'Dairy',     unit: 'piece',    packageSize: 12, packagePrice: 6.50, defaultPerPerson: 1 },
+  { name: 'Cream cheese spread (500g)',              category: 'Dairy',     unit: 'g',        packageSize: 500,packagePrice: 5.50, defaultPerPerson: 25 },
+  { name: 'Cheese platter (assorted French, 1kg)',   category: 'Dairy',     unit: 'g',        packageSize: 1000,packagePrice: 22.00,defaultPerPerson: 60 },
+  { name: 'Brie (whole wheel ~1kg)',                 category: 'Dairy',     unit: 'g',        packageSize: 1000,packagePrice: 15.00,defaultPerPerson: 40 },
+  { name: 'Comté (1kg piece)',                       category: 'Dairy',     unit: 'g',        packageSize: 1000,packagePrice: 24.00,defaultPerPerson: 30 },
+
+  // Meat & Deli
+  { name: 'Jambon de Paris (sliced, 1kg)',           category: 'Meat & Deli',unit: 'g',       packageSize: 1000,packagePrice: 14.00,defaultPerPerson: 60 },
+  { name: 'Saucisson sec',                           category: 'Meat & Deli',unit: 'g',       packageSize: 400, packagePrice: 9.00, defaultPerPerson: 30 },
+  { name: 'Rotisserie chicken',                      category: 'Meat & Deli',unit: 'piece',   packageSize: 1,   packagePrice: 9.99, defaultPerPerson: 0.25 },
+  { name: 'Smoked salmon (1kg)',                     category: 'Meat & Deli',unit: 'g',       packageSize: 1000,packagePrice: 38.00,defaultPerPerson: 50 },
+  { name: 'Pâté de campagne',                        category: 'Meat & Deli',unit: 'g',       packageSize: 500, packagePrice: 6.50, defaultPerPerson: 30 },
+
+  // Produce
+  { name: 'Bananas',                                 category: 'Produce',   unit: 'piece',    packageSize: 1,   packagePrice: 0.25, defaultPerPerson: 1 },
+  { name: 'Apples (1kg)',                            category: 'Produce',   unit: 'g',        packageSize: 1000,packagePrice: 2.80, defaultPerPerson: 150 },
+  { name: 'Berries — strawberries (500g)',           category: 'Produce',   unit: 'g',        packageSize: 500, packagePrice: 5.50, defaultPerPerson: 80 },
+  { name: 'Mixed fruit platter',                     category: 'Produce',   unit: 'serving',  packageSize: 10,  packagePrice: 24.00,defaultPerPerson: 1 },
+  { name: 'Salad greens — mixed (500g)',             category: 'Produce',   unit: 'g',        packageSize: 500, packagePrice: 4.50, defaultPerPerson: 60 },
+  { name: 'Tomatoes (1kg)',                          category: 'Produce',   unit: 'g',        packageSize: 1000,packagePrice: 3.20, defaultPerPerson: 120 },
+  { name: 'Cucumbers (3-pack)',                      category: 'Produce',   unit: 'piece',    packageSize: 3,   packagePrice: 2.40, defaultPerPerson: 0.5 },
+  { name: 'Avocados (6-pack)',                       category: 'Produce',   unit: 'piece',    packageSize: 6,   packagePrice: 7.00, defaultPerPerson: 0.5 },
+
+  // Snacks
+  { name: 'Granola bars (box of 24)',                category: 'Snacks',    unit: 'piece',    packageSize: 24,  packagePrice: 12.00,defaultPerPerson: 1 },
+  { name: 'Mixed nuts (1kg)',                        category: 'Snacks',    unit: 'g',        packageSize: 1000,packagePrice: 14.50,defaultPerPerson: 30 },
+  { name: 'Potato chips — big bag',                  category: 'Snacks',    unit: 'serving',  packageSize: 12,  packagePrice: 5.50, defaultPerPerson: 1 },
+  { name: 'Olives (jar 500g)',                       category: 'Snacks',    unit: 'g',        packageSize: 500, packagePrice: 6.00, defaultPerPerson: 25 },
+  { name: 'Crackers / TUC',                          category: 'Snacks',    unit: 'piece',    packageSize: 40,  packagePrice: 3.50, defaultPerPerson: 4 },
+  { name: 'Chocolate — assorted',                    category: 'Snacks',    unit: 'g',        packageSize: 500, packagePrice: 8.50, defaultPerPerson: 30 },
+
+  // Pantry
+  { name: 'Jam — strawberry (370g)',                 category: 'Pantry',    unit: 'g',        packageSize: 370, packagePrice: 3.20, defaultPerPerson: 15 },
+  { name: 'Honey (500g)',                            category: 'Pantry',    unit: 'g',        packageSize: 500, packagePrice: 7.50, defaultPerPerson: 8 },
+  { name: 'Nutella (750g)',                          category: 'Pantry',    unit: 'g',        packageSize: 750, packagePrice: 5.80, defaultPerPerson: 15 },
+  { name: 'Sugar (1kg)',                             category: 'Pantry',    unit: 'g',        packageSize: 1000,packagePrice: 1.20, defaultPerPerson: 10 },
+  { name: 'Sea salt',                                category: 'Pantry',    unit: 'g',        packageSize: 500, packagePrice: 1.80, defaultPerPerson: 5 },
+  { name: 'Olive oil (1L)',                          category: 'Pantry',    unit: 'mL',       packageSize: 1000,packagePrice: 9.50, defaultPerPerson: 15 },
+  { name: 'Cereal — granola family pack',            category: 'Pantry',    unit: 'g',        packageSize: 1000,packagePrice: 8.00, defaultPerPerson: 40 },
+
+  // Supplies (non-food)
+  { name: 'Napkins (pack of 500)',                   category: 'Supplies',  unit: 'piece',    packageSize: 500, packagePrice: 9.00, defaultPerPerson: 5 },
+  { name: 'Paper plates (sturdy, 200)',              category: 'Supplies',  unit: 'piece',    packageSize: 200, packagePrice: 16.00,defaultPerPerson: 3 },
+  { name: 'Plastic cups (200 pack)',                 category: 'Supplies',  unit: 'piece',    packageSize: 200, packagePrice: 12.00,defaultPerPerson: 4 },
+  { name: 'Wine glasses (disposable, 50)',           category: 'Supplies',  unit: 'piece',    packageSize: 50,  packagePrice: 14.00,defaultPerPerson: 2 },
+  { name: 'Trash bags (heavy duty, 50)',             category: 'Supplies',  unit: 'piece',    packageSize: 50,  packagePrice: 12.00,defaultPerPerson: 0.5 },
+  { name: 'Aluminum foil (large roll)',              category: 'Supplies',  unit: 'roll',     packageSize: 1,   packagePrice: 8.50, defaultPerPerson: 0.05 },
+  { name: 'Ice (10kg bag)',                          category: 'Supplies',  unit: 'kg',       packageSize: 10,  packagePrice: 5.00, defaultPerPerson: 0.5 },
+];
+
+/* Meal-type preset bundles — what items typically go with a meal */
+const MEAL_PRESETS = {
+  breakfast: [
+    'Croissants (pack of 12)',
+    'Pain au chocolat (pack of 12)',
+    'Baguette',
+    'Butter (250g, pack of 4)',
+    'Jam — strawberry (370g)',
+    'Eggs (tray of 30)',
+    'Yogurt (12 pack, individual)',
+    'Coffee beans (Lavazza 1kg)',
+    'Milk 1L UHT (pack of 6)',
+    'Orange juice 1.5L (Tropicana)',
+    'Bananas',
+  ],
+  brunch: [
+    'Mini pastries assortment',
+    'Brioche tressée',
+    'Eggs (tray of 30)',
+    'Smoked salmon (1kg)',
+    'Cream cheese spread (500g)',
+    'Mixed fruit platter',
+    'Cheese platter (assorted French, 1kg)',
+    'Orange juice 1.5L (Tropicana)',
+    'Champagne (Cuvée brut)',
+    'Coffee beans (Lavazza 1kg)',
+  ],
+  lunch: [
+    'Baguette',
+    'Jambon de Paris (sliced, 1kg)',
+    'Brie (whole wheel ~1kg)',
+    'Salad greens — mixed (500g)',
+    'Tomatoes (1kg)',
+    'Mixed fruit platter',
+    'Bottled water 1.5L (Cristaline)',
+    'Rosé Provence',
+    'Potato chips — big bag',
+  ],
+  dinner: [
+    'Baguette',
+    'Cheese platter (assorted French, 1kg)',
+    'Saucisson sec',
+    'Pâté de campagne',
+    'Rotisserie chicken',
+    'Salad greens — mixed (500g)',
+    'Red wine — Bordeaux',
+    'White wine — Sancerre',
+    'Bottled water 1.5L (Cristaline)',
+    'Sparkling water 1L (Perrier)',
+  ],
+  sightsee: [
+    'Bottled water 1.5L (Cristaline)',
+    'Granola bars (box of 24)',
+    'Apples (1kg)',
+    'Bananas',
+    'Mixed nuts (1kg)',
+  ],
+  wedding: [
+    'Champagne (Cuvée brut)',
+    'Red wine — Bordeaux',
+    'White wine — Sancerre',
+    'Bottled water 1.5L (Cristaline)',
+    'Sparkling water 1L (Perrier)',
+    'Cheese platter (assorted French, 1kg)',
+    'Mixed fruit platter',
+    'Mini pastries assortment',
+  ],
+  travel: [
+    'Bottled water 1.5L (Cristaline)',
+    'Granola bars (box of 24)',
+  ],
+  other: [],
+};
+
+/* ============================================================
+   STATE & PERSISTENCE
+   ============================================================ */
+const LS_KEY = 'wedding-planner-v1';
+let state = loadState();
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return seedState();
+}
+function saveState() { localStorage.setItem(LS_KEY, JSON.stringify(state)); }
+
+function seedState() {
+  // Pre-populate with a sensible starter schedule
+  return {
+    defaultPeople: 25,
+    events: [
+      mkEvent('Arrival & settle in',        '2026-06-09', 16, 0, 18, 0, 'travel',   25, 'Check into château, distribute keys'),
+      mkEvent('Welcome aperitif',           '2026-06-09', 18, 30, 20, 0, 'other',  25, 'Champagne on the terrace'),
+      mkEvent('Welcome dinner',             '2026-06-09', 20, 0, 22, 30, 'dinner',  25, ''),
+      mkEvent('Breakfast',                  '2026-06-10', 8, 0, 10, 0, 'breakfast',25, ''),
+      mkEvent('Château Chenonceau visit',   '2026-06-10', 10, 30, 15, 0, 'sightsee',25, 'Packed lunch — water, fruit, snacks'),
+      mkEvent('Dinner — casual',            '2026-06-10', 19, 30, 22, 0, 'dinner',  25, ''),
+      mkEvent('Breakfast',                  '2026-06-11', 8, 0, 10, 0, 'breakfast',25, ''),
+      mkEvent('Free morning',               '2026-06-11', 10, 0, 12, 0, 'other',   25, ''),
+      mkEvent('Loire wine tasting',         '2026-06-11', 14, 0, 17, 0, 'sightsee',25, ''),
+      mkEvent('Dinner',                     '2026-06-11', 20, 0, 22, 30, 'dinner',  25, ''),
+      mkEvent('Breakfast',                  '2026-06-12', 8, 0, 10, 0, 'breakfast',25, ''),
+      mkEvent('Rehearsal',                  '2026-06-12', 14, 0, 16, 0, 'wedding', 25, ''),
+      mkEvent('Rehearsal dinner',           '2026-06-12', 19, 0, 22, 30, 'dinner', 25, ''),
+      mkEvent('Bridal party breakfast',     '2026-06-13', 8, 30, 10, 0, 'breakfast',12, 'Light — keep nerves in mind'),
+      mkEvent('Getting ready',              '2026-06-13', 10, 0, 14, 0, 'wedding', 12, 'Snacks + sparkling water on hand'),
+      mkEvent('Ceremony',                   '2026-06-13', 15, 0, 16, 0, 'wedding', 80, ''),
+      mkEvent('Cocktail hour',              '2026-06-13', 16, 0, 17, 30, 'wedding', 80, ''),
+      mkEvent('Wedding dinner & reception', '2026-06-13', 17, 30, 23, 59, 'wedding', 80, ''),
+      mkEvent('Farewell brunch',            '2026-06-14', 10, 0, 13, 0, 'brunch',  40, ''),
+      mkEvent('Pack & relax',               '2026-06-14', 14, 0, 18, 0, 'other',   25, ''),
+      mkEvent('Departure',                  '2026-06-15', 9, 0, 12, 0, 'travel',  25, 'Light breakfast first'),
+    ],
+    priceOverrides: {},  // { foodName: customPrice }
+    checked: {},         // { foodName: true } for shopping list
+  };
+}
+
+function mkEvent(title, date, sh, sm, eh, em, type, people, notes) {
+  const ev = {
+    id: 'evt_' + Math.random().toString(36).slice(2, 9),
+    title, date,
+    startHour: sh, startMin: sm,
+    endHour: eh, endMin: em,
+    type, people, notes,
+    food: [], // array of { name, perPerson } — pulled from FOOD_LIBRARY
+  };
+  // Auto-fill default food preset for this event type
+  ev.food = (MEAL_PRESETS[type] || []).map(n => {
+    const lib = FOOD_LIBRARY.find(f => f.name === n);
+    return lib ? { name: n, perPerson: lib.defaultPerPerson } : null;
+  }).filter(Boolean);
+  return ev;
+}
+
+/* ============================================================
+   RENDER: CALENDAR
+   ============================================================ */
+function renderCalendar() {
+  const header = document.getElementById('cal-header');
+  const body = document.getElementById('cal-body');
+  header.innerHTML = '<div class="corner">Time</div>';
+  DAYS.forEach(d => {
+    header.innerHTML += `
+      <div class="day-head ${d.wedding ? 'wedding' : ''}">
+        ${d.name} ${d.label ? '· ' + d.label : ''}
+        <span class="num">${d.num}</span>
+      </div>`;
+  });
+
+  let bodyHTML = '<div class="hour-col">';
+  for (let h = HOUR_START; h < HOUR_END; h++) {
+    bodyHTML += `<div class="hour">${formatHour(h)}</div>`;
+  }
+  bodyHTML += '</div>';
+
+  DAYS.forEach(d => {
+    bodyHTML += `<div class="day-col ${d.wedding ? 'wedding' : ''}" data-date="${d.date}">`;
+    for (let h = HOUR_START; h < HOUR_END; h++) {
+      bodyHTML += `<div class="hour-slot" data-hour="${h}"></div>`;
+    }
+    bodyHTML += '</div>';
+  });
+
+  body.innerHTML = bodyHTML;
+
+  // Render events into day columns
+  state.events.forEach(ev => renderEvent(ev));
+
+  // Hook up empty-slot clicks
+  body.querySelectorAll('.hour-slot').forEach(slot => {
+    slot.addEventListener('click', (e) => {
+      const date = slot.closest('.day-col').dataset.date;
+      const hour = parseInt(slot.dataset.hour, 10);
+      openModal(null, { date, startHour: hour, startMin: 0, endHour: hour + 1, endMin: 0 });
+    });
+  });
+}
+
+function renderEvent(ev) {
+  const col = document.querySelector(`.day-col[data-date="${ev.date}"]`);
+  if (!col) return;
+  const startMins = (ev.startHour - HOUR_START) * 60 + ev.startMin;
+  const endMins   = (ev.endHour   - HOUR_START) * 60 + ev.endMin;
+  const top = (startMins / 60) * HOUR_PX;
+  const height = Math.max(28, ((endMins - startMins) / 60) * HOUR_PX - 2);
+
+  const el = document.createElement('div');
+  el.className = 'event';
+  el.dataset.eventId = ev.id;
+  el.style.top = top + 'px';
+  el.style.height = height + 'px';
+  el.style.background = TYPE_COLOR[ev.type] || TYPE_COLOR.other;
+  el.innerHTML = `
+    <div class="title">${escapeHTML(ev.title)}</div>
+    <div class="time">${formatTime(ev.startHour, ev.startMin)} – ${formatTime(ev.endHour, ev.endMin)}</div>
+    <div class="ppl">👤 ${ev.people}</div>
+  `;
+  el.addEventListener('click', (e) => {
+    e.stopPropagation();
+    // Look up the live event from state by id. If the captured ref is stale, self-heal.
+    const id = el.dataset.eventId;
+    let liveEv = state.events.find(x => x.id === id);
+    if (!liveEv) {
+      console.warn('[click] stale event div for id', id, '— re-attaching captured event to state');
+      liveEv = { ...ev, id }; // ensure id is stable
+      state.events.push(liveEv);
+      saveState();
+    }
+    openModal(liveEv);
+  });
+  col.appendChild(el);
+}
+
+function formatHour(h) {
+  if (h === 0 || h === 24) return '12 AM';
+  if (h === 12) return '12 PM';
+  return (h > 12 ? h - 12 : h) + (h >= 12 ? ' PM' : ' AM');
+}
+function formatTime(h, m) {
+  const mm = String(m).padStart(2, '0');
+  if (h === 24) return '12:00 AM';
+  if (h === 0) return '12:' + mm + ' AM';
+  if (h === 12) return '12:' + mm + ' PM';
+  return (h > 12 ? h - 12 : h) + ':' + mm + (h >= 12 ? ' PM' : ' AM');
+}
+function escapeHTML(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* ============================================================
+   MODAL — create / edit event
+   ============================================================ */
+let editingId = null;
+
+function openModal(ev, prefill) {
+  editingId = ev ? ev.id : null;
+  document.getElementById('modal-title').textContent = ev ? 'Edit event' : 'New event';
+  document.getElementById('evt-delete').style.display = ev ? 'inline-flex' : 'none';
+
+  // Populate date dropdown
+  const dateSel = document.getElementById('evt-date');
+  dateSel.innerHTML = DAYS.map(d => `<option value="${d.date}">${d.name} ${d.num} June ${d.label ? '— ' + d.label : ''}</option>`).join('');
+
+  const data = ev || {
+    title: '', date: (prefill && prefill.date) || DAYS[0].date,
+    startHour: prefill ? prefill.startHour : 12, startMin: prefill ? prefill.startMin : 0,
+    endHour:   prefill ? prefill.endHour   : 13, endMin:   prefill ? prefill.endMin   : 0,
+    type: prefill ? suggestType(prefill.startHour) : 'other',
+    people: state.defaultPeople,
+    notes: '',
+    food: [],
+  };
+
+  document.getElementById('evt-title').value = data.title;
+  dateSel.value = data.date;
+  document.getElementById('evt-start').value = pad2(data.startHour) + ':' + pad2(data.startMin);
+  document.getElementById('evt-end').value = pad2(data.endHour === 24 ? 23 : data.endHour) + ':' + pad2(data.endHour === 24 ? 59 : data.endMin);
+  document.getElementById('evt-type').value = data.type;
+  document.getElementById('evt-people').value = data.people;
+  document.getElementById('evt-notes').value = data.notes || '';
+
+  // Auto-fill food for new events based on suggested type
+  if (!ev && (!data.food || data.food.length === 0)) {
+    data.food = (MEAL_PRESETS[data.type] || []).map(n => {
+      const lib = FOOD_LIBRARY.find(f => f.name === n);
+      return lib ? { name: n, perPerson: lib.defaultPerPerson } : null;
+    }).filter(Boolean);
+  }
+
+  // Meal-type banner
+  const banner = document.getElementById('meal-suggest-banner');
+  const sugg = suggestType(data.startHour);
+  if (!ev && ['breakfast','brunch','lunch','dinner'].includes(sugg)) {
+    banner.innerHTML = `<div class="meal-suggest">⏰ Based on the time (${formatTime(data.startHour, data.startMin)}), this looks like <b>${sugg}</b>. The food preset has been loaded — adjust as needed.</div>`;
+  } else { banner.innerHTML = ''; }
+
+  // Render presets bar
+  renderPresetButtons(data);
+  renderFoodRows(data);
+
+  // Live updates
+  document.getElementById('evt-people').oninput = () => {
+    document.getElementById('hdr-people').textContent = document.getElementById('evt-people').value || 0;
+    renderFoodRows(currentFormData(data));
+  };
+  document.getElementById('evt-type').onchange = () => renderPresetButtons(currentFormData(data));
+
+  // Show
+  document.getElementById('event-modal').classList.add('show');
+  document.getElementById('hdr-people').textContent = data.people;
+
+  // Save handler
+  document.getElementById('evt-save').onclick = () => saveModalEvent(data);
+  document.getElementById('evt-delete').onclick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      if (!editingId) { return; }
+      if (!confirm('Delete this event? This cannot be undone.')) return;
+
+      // Remove from state by id
+      const before = state.events.length;
+      state.events = state.events.filter(item => String(item.id) !== String(editingId));
+
+      // Self-heal the DOM: remove any visible event div with that id, even if it was a ghost
+      document.querySelectorAll('.event[data-event-id="' + editingId + '"]').forEach(el => el.remove());
+
+      saveState();
+      renderCalendar();
+      renderShopping();
+      closeModal();
+
+      console.log('[delete] removed ' + (before - state.events.length) + ' event(s) from state for id ' + editingId);
+    } catch (err) {
+      console.error('[delete] threw:', err);
+      alert('Delete threw an error: ' + err.message);
+    }
+  };
+
+  // Closes
+  document.querySelectorAll('[data-close]').forEach(b => b.onclick = closeModal);
+}
+
+function currentFormData(base) {
+  return {
+    ...base,
+    title: document.getElementById('evt-title').value,
+    date: document.getElementById('evt-date').value,
+    type: document.getElementById('evt-type').value,
+    people: parseInt(document.getElementById('evt-people').value, 10) || 1,
+    notes: document.getElementById('evt-notes').value,
+    food: base.food, // food edits update base.food directly
+  };
+}
+
+function pad2(n) { return String(n).padStart(2, '0'); }
+
+function suggestType(h) {
+  if (h >= 7 && h < 10) return 'breakfast';
+  if (h >= 10 && h < 12) return 'brunch';
+  if (h >= 12 && h < 15) return 'lunch';
+  if (h >= 18 && h < 23) return 'dinner';
+  return 'other';
+}
+
+function renderPresetButtons(data) {
+  const type = document.getElementById('evt-type').value;
+  const wrap = document.getElementById('food-presets');
+  wrap.innerHTML = '<span style="font-size:11px;color:var(--muted);align-self:center;margin-right:4px;">Quick add:</span>';
+  const preset = MEAL_PRESETS[type] || [];
+  if (preset.length === 0) {
+    wrap.innerHTML += '<span style="font-size:12px;color:var(--muted)">No preset for this event type — add items manually below.</span>';
+    return;
+  }
+  const btn = document.createElement('button');
+  btn.className = 'preset-btn'; btn.textContent = `Load ${type} preset (${preset.length} items)`;
+  btn.onclick = (e) => {
+    e.preventDefault();
+    preset.forEach(n => {
+      if (!data.food.find(f => f.name === n)) {
+        const lib = FOOD_LIBRARY.find(f => f.name === n);
+        if (lib) data.food.push({ name: n, perPerson: lib.defaultPerPerson });
+      }
+    });
+    renderFoodRows(data);
+  };
+  wrap.appendChild(btn);
+
+  const clear = document.createElement('button');
+  clear.className = 'preset-btn'; clear.textContent = 'Clear all';
+  clear.onclick = (e) => { e.preventDefault(); data.food = []; renderFoodRows(data); };
+  wrap.appendChild(clear);
+}
+
+function renderFoodRows(data) {
+  const tbody = document.getElementById('food-rows');
+  const people = parseInt(document.getElementById('evt-people').value, 10) || 0;
+  document.getElementById('hdr-people').textContent = people;
+
+  if (data.food.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:18px;">No food items yet. Use a preset above or add custom items below.</td></tr>';
+  } else {
+    tbody.innerHTML = data.food.map((f, idx) => {
+      const lib = FOOD_LIBRARY.find(L => L.name === f.name);
+      const unit = lib ? lib.unit : 'piece';
+      const cat = lib ? lib.category : '—';
+      const total = (f.perPerson * people).toFixed(2).replace(/\.?0+$/, '');
+      return `
+        <tr data-idx="${idx}">
+          <td>${escapeHTML(f.name)}</td>
+          <td><input type="number" step="0.1" min="0" value="${f.perPerson}" class="pp-input"/></td>
+          <td>${unit}</td>
+          <td class="qty-calc">${total} ${unit}</td>
+          <td>${cat}</td>
+          <td><button class="del" title="Remove">×</button></td>
+        </tr>`;
+    }).join('');
+
+    tbody.querySelectorAll('tr').forEach(tr => {
+      const idx = parseInt(tr.dataset.idx, 10);
+      tr.querySelector('.pp-input').addEventListener('input', (e) => {
+        data.food[idx].perPerson = parseFloat(e.target.value) || 0;
+        const total = (data.food[idx].perPerson * (parseInt(document.getElementById('evt-people').value, 10) || 0)).toFixed(2).replace(/\.?0+$/, '');
+        tr.querySelector('.qty-calc').textContent = total + ' ' + (FOOD_LIBRARY.find(L => L.name === data.food[idx].name)?.unit || '');
+      });
+      tr.querySelector('.del').addEventListener('click', () => {
+        data.food.splice(idx, 1);
+        renderFoodRows(data);
+      });
+    });
+  }
+
+  // "Add custom" — open simple picker
+  document.getElementById('add-food-row').onclick = (e) => {
+    e.preventDefault();
+    showFoodPicker(data);
+  };
+}
+
+function showFoodPicker(data) {
+  // Compact picker: prompt-driven — categories with items
+  const used = new Set(data.food.map(f => f.name));
+  const remaining = FOOD_LIBRARY.filter(f => !used.has(f.name));
+  if (remaining.length === 0) { alert('Every item in the library has already been added.'); return; }
+
+  // Build a tiny inline dropdown overlay near the button
+  const existing = document.getElementById('food-picker');
+  if (existing) { existing.remove(); }
+
+  const wrap = document.createElement('div');
+  wrap.id = 'food-picker';
+  wrap.style.cssText = 'position:absolute;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px;max-height:280px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.15);z-index:200;min-width:300px;';
+  const cats = [...new Set(remaining.map(f => f.category))];
+  let html = '';
+  cats.forEach(c => {
+    html += `<div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:6px 4px 2px;font-weight:600;">${c}</div>`;
+    remaining.filter(f => f.category === c).forEach(f => {
+      html += `<div class="pick-item" data-name="${escapeHTML(f.name)}" style="padding:6px 8px;cursor:pointer;border-radius:6px;font-size:13px;">${escapeHTML(f.name)} <span style="color:var(--muted);font-size:11px;">— €${f.packagePrice}/pack</span></div>`;
+    });
+  });
+  wrap.innerHTML = html;
+
+  const btn = document.getElementById('add-food-row');
+  const rect = btn.getBoundingClientRect();
+  document.body.appendChild(wrap);
+  wrap.style.top = (rect.bottom + window.scrollY + 4) + 'px';
+  wrap.style.left = (rect.left + window.scrollX) + 'px';
+
+  wrap.querySelectorAll('.pick-item').forEach(el => {
+    el.addEventListener('mouseenter', () => el.style.background = '#faf7f0');
+    el.addEventListener('mouseleave', () => el.style.background = 'transparent');
+    el.addEventListener('click', () => {
+      const name = el.dataset.name;
+      const lib = FOOD_LIBRARY.find(L => L.name === name);
+      data.food.push({ name, perPerson: lib.defaultPerPerson });
+      wrap.remove();
+      renderFoodRows(data);
+    });
+  });
+
+  // Close on outside click
+  setTimeout(() => {
+    document.addEventListener('click', function once(e) {
+      if (!wrap.contains(e.target) && e.target !== btn) {
+        wrap.remove();
+        document.removeEventListener('click', once);
+      }
+    });
+  }, 0);
+}
+
+function saveModalEvent(base) {
+  const title = document.getElementById('evt-title').value.trim() || 'Untitled event';
+  const date = document.getElementById('evt-date').value;
+  const [sh, sm] = document.getElementById('evt-start').value.split(':').map(Number);
+  const [eh, em] = document.getElementById('evt-end').value.split(':').map(Number);
+  const type = document.getElementById('evt-type').value;
+  const people = parseInt(document.getElementById('evt-people').value, 10) || 1;
+  const notes = document.getElementById('evt-notes').value;
+
+  if (eh * 60 + em <= sh * 60 + sm) { alert('End time must be after start time.'); return; }
+
+  const payload = {
+    title, date,
+    startHour: sh, startMin: sm,
+    endHour: eh, endMin: em,
+    type, people, notes,
+    food: base.food,
+  };
+
+  if (editingId) {
+    const i = state.events.findIndex(e => e.id === editingId);
+    state.events[i] = { ...state.events[i], ...payload };
+  } else {
+    state.events.push({ id: 'evt_' + Math.random().toString(36).slice(2, 9), ...payload });
+  }
+  saveState(); renderCalendar(); renderShopping(); closeModal();
+}
+
+function closeModal() {
+  document.getElementById('event-modal').classList.remove('show');
+  editingId = null;
+  const fp = document.getElementById('food-picker'); if (fp) fp.remove();
+}
+
+/* ============================================================
+   SHOPPING LIST
+   ============================================================ */
+function renderShopping() {
+  const out = document.getElementById('shop-content');
+
+  // Aggregate: for each food item across all events, sum the total quantity needed
+  const agg = {}; // name -> { totalQty, usages: [{event, qty}] }
+  state.events.forEach(ev => {
+    (ev.food || []).forEach(f => {
+      const qty = (f.perPerson || 0) * (ev.people || 0);
+      if (!agg[f.name]) agg[f.name] = { totalQty: 0, usages: [] };
+      agg[f.name].totalQty += qty;
+      agg[f.name].usages.push({ event: ev.title, date: ev.date, qty });
+    });
+  });
+
+  if (Object.keys(agg).length === 0) {
+    out.innerHTML = '<div class="empty">No food items planned yet. Add events on the Calendar tab to build your shopping list.</div>';
+    document.getElementById('shop-grand-total').textContent = '€0.00';
+    return;
+  }
+
+  // Group by category, compute packages + cost
+  const byCategory = {};
+  let grandTotal = 0;
+  Object.entries(agg).forEach(([name, info]) => {
+    const lib = FOOD_LIBRARY.find(f => f.name === name);
+    if (!lib) return;
+    const packagesNeeded = Math.ceil(info.totalQty / lib.packageSize);
+    const unitPrice = state.priceOverrides[name] !== undefined ? state.priceOverrides[name] : lib.packagePrice;
+    const subtotal = packagesNeeded * unitPrice;
+    grandTotal += subtotal;
+    if (!byCategory[lib.category]) byCategory[lib.category] = [];
+    byCategory[lib.category].push({ name, lib, info, packagesNeeded, unitPrice, subtotal });
+  });
+
+  const CATEGORY_ORDER = ['Beverages','Bakery','Dairy','Meat & Deli','Produce','Snacks','Pantry','Supplies'];
+  let html = '';
+  CATEGORY_ORDER.forEach(cat => {
+    if (!byCategory[cat]) return;
+    const rows = byCategory[cat].sort((a,b) => a.name.localeCompare(b.name));
+    html += `<div class="cat-group"><h3>${cat}</h3><table class="shop-table">
+      <thead><tr>
+        <th class="checkbox"></th>
+        <th>Item</th>
+        <th class="qty">Need</th>
+        <th class="qty">Buy (packs)</th>
+        <th class="price">€ / pack</th>
+        <th class="total">Subtotal</th>
+      </tr></thead><tbody>`;
+    rows.forEach(r => {
+      const checked = state.checked[r.name] ? 'checked' : '';
+      const usage = r.info.usages.map(u => `${u.event} (${dateShort(u.date)})`).join(' · ');
+      html += `<tr data-name="${escapeHTML(r.name)}" class="${state.checked[r.name] ? 'checked' : ''}">
+        <td class="checkbox"><input type="checkbox" ${checked} /></td>
+        <td>
+          <div><b>${escapeHTML(r.name)}</b></div>
+          <div class="usage">${usage}</div>
+        </td>
+        <td class="qty">${formatQty(r.info.totalQty)} ${r.lib.unit}</td>
+        <td class="qty">${r.packagesNeeded} × ${r.lib.packageSize}${r.lib.unit === 'g' ? '' : ''} ${r.lib.unit}</td>
+        <td class="price"><input type="number" step="0.01" min="0" value="${r.unitPrice.toFixed(2)}" /></td>
+        <td class="total">€${r.subtotal.toFixed(2)}</td>
+      </tr>`;
+    });
+    html += '</tbody></table></div>';
+  });
+
+  out.innerHTML = html;
+  document.getElementById('shop-grand-total').textContent = '€' + grandTotal.toFixed(2);
+
+  // Wire up checkboxes & price overrides
+  out.querySelectorAll('tr[data-name]').forEach(tr => {
+    const name = tr.dataset.name;
+    tr.querySelector('input[type=checkbox]').addEventListener('change', e => {
+      state.checked[name] = e.target.checked;
+      saveState();
+      tr.classList.toggle('checked', e.target.checked);
+    });
+    tr.querySelector('input[type=number]').addEventListener('input', e => {
+      const v = parseFloat(e.target.value);
+      if (!isNaN(v)) {
+        state.priceOverrides[name] = v;
+        saveState();
+        renderShopping(); // re-aggregate for new total
+      }
+    });
+  });
+}
+
+function formatQty(n) {
+  if (n >= 1000 && Number.isInteger(n)) return n.toLocaleString();
+  if (n % 1 === 0) return n;
+  return n.toFixed(1);
+}
+function dateShort(d) {
+  const day = DAYS.find(D => D.date === d);
+  return day ? day.name + ' ' + day.num : d;
+}
+
+/* ============================================================
+   EXPORT — PNG + PDF
+   ============================================================ */
+async function exportPNG() {
+  const view = currentView();
+  const node = document.getElementById(view === 'calendar' ? 'capture-calendar' : 'capture-shopping');
+  // For calendar, temporarily expand so the full grid is captured (not just the visible scroll area)
+  const body = document.getElementById('cal-body');
+  const prevMax = body ? body.style.maxHeight : null;
+  if (view === 'calendar' && body) body.style.maxHeight = 'none';
+
+  const canvas = await html2canvas(node, { backgroundColor: '#f7f5f1', scale: 2 });
+
+  if (view === 'calendar' && body) body.style.maxHeight = prevMax;
+
+  const a = document.createElement('a');
+  a.href = canvas.toDataURL('image/png');
+  a.download = `wedding-${view}-${stamp()}.png`;
+  a.click();
+}
+
+async function exportPDF() {
+  const view = currentView();
+  const node = document.getElementById(view === 'calendar' ? 'capture-calendar' : 'capture-shopping');
+  const body = document.getElementById('cal-body');
+  const prevMax = body ? body.style.maxHeight : null;
+  if (view === 'calendar' && body) body.style.maxHeight = 'none';
+
+  const canvas = await html2canvas(node, { backgroundColor: '#ffffff', scale: 2 });
+  if (view === 'calendar' && body) body.style.maxHeight = prevMax;
+
+  const { jsPDF } = window.jspdf;
+  const isLandscape = view === 'calendar';
+  const pdf = new jsPDF({ orientation: isLandscape ? 'landscape' : 'portrait', unit: 'pt', format: 'a4' });
+  const pageW = pdf.internal.pageSize.getWidth();
+  const pageH = pdf.internal.pageSize.getHeight();
+  const margin = 24;
+  const usableW = pageW - margin * 2;
+  const ratio = canvas.height / canvas.width;
+  const imgW = usableW;
+  const imgH = imgW * ratio;
+  const imgData = canvas.toDataURL('image/png');
+
+  if (imgH <= pageH - margin * 2) {
+    pdf.addImage(imgData, 'PNG', margin, margin, imgW, imgH);
+  } else {
+    // Slice across pages
+    const pageImageH = pageH - margin * 2;
+    const totalPages = Math.ceil(imgH / pageImageH);
+    for (let i = 0; i < totalPages; i++) {
+      if (i > 0) pdf.addPage();
+      // Draw the full image, offset, with clipping
+      pdf.addImage(imgData, 'PNG', margin, margin - i * pageImageH, imgW, imgH);
+      // Cover everything above/below the visible window with white
+      pdf.setFillColor(255, 255, 255);
+      pdf.rect(0, 0, pageW, margin, 'F');
+      pdf.rect(0, pageH - margin, pageW, margin, 'F');
+    }
+  }
+  pdf.save(`wedding-${view}-${stamp()}.pdf`);
+}
+
+function stamp() {
+  const d = new Date();
+  return d.getFullYear() + pad2(d.getMonth()+1) + pad2(d.getDate());
+}
+function currentView() {
+  return document.querySelector('.tab.active').dataset.view;
+}
+
+/* ============================================================
+   WIRING
+   ============================================================ */
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    const v = t.dataset.view;
+    document.getElementById('view-calendar').classList.toggle('hidden', v !== 'calendar');
+    document.getElementById('view-shopping').classList.toggle('hidden', v !== 'shopping');
+    if (v === 'shopping') renderShopping();
+  });
+});
+
+document.getElementById('btn-add-event').addEventListener('click', () => openModal(null, { date: DAYS[0].date, startHour: 12, startMin: 0, endHour: 13, endMin: 0 }));
+document.getElementById('btn-export-png').addEventListener('click', exportPNG);
+document.getElementById('btn-export-pdf').addEventListener('click', exportPDF);
+document.getElementById('btn-reset').addEventListener('click', () => {
+  if (confirm('Wipe all events and start fresh? (Your data will be lost.)')) {
+    localStorage.removeItem(LS_KEY);
+    state = seedState();
+    saveState();
+    renderCalendar();
+    renderShopping();
+  }
+});
+document.getElementById('default-people').addEventListener('input', e => {
+  state.defaultPeople = parseInt(e.target.value, 10) || 1;
+  saveState();
+});
+
+// Modal close on backdrop click
+document.getElementById('event-modal').addEventListener('click', e => {
+  if (e.target.id === 'event-modal') closeModal();
+});
+
+// Initial render
+document.getElementById('default-people').value = state.defaultPeople;
+renderCalendar();
+renderShopping();
+</script>
+</body>
+</html>
